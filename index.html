@@ -18,28 +18,28 @@
 html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
 .dashboard{max-width:1100px;margin:0 auto;padding:1.5rem 1rem 3rem}
 
-/* HEADER */
 .header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;background:var(--bg2);border:0.5px solid var(--card-border);border-radius:12px;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.75rem}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-icon{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .logo-text{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--accent)}
 .logo-sub{font-size:11px;color:var(--text2)}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .status-badge{display:flex;align-items:center;gap:6px;background:rgba(0,255,157,0.1);border:0.5px solid rgba(0,255,157,0.3);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--accent2);white-space:nowrap}
 .pulse-dot{width:7px;height:7px;background:var(--accent2);border-radius:50%;animation:pulse 1.5s infinite;flex-shrink:0}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
 
-/* PATIENT BAR */
 .patient-bar{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;background:var(--bg2);border:0.5px solid var(--card-border);border-radius:12px;margin-bottom:1.5rem;flex-wrap:wrap}
 .patient-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1a3a5c,#0d2240);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-weight:700;font-size:14px;color:var(--accent);flex-shrink:0}
 .patient-name{font-size:15px;font-weight:500}
 .patient-meta{font-size:12px;color:var(--text2);margin-top:2px}
 .last-updated{margin-left:auto;font-size:11px;color:var(--text3);font-family:'Space Mono',monospace;white-space:nowrap}
 
-/* VITALS */
 .vitals-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:1.5rem}
 .vital-card{background:var(--bg2);border:0.5px solid var(--card-border);border-radius:14px;padding:1.25rem;position:relative;overflow:hidden;transition:border-color 0.3s}
 .vital-card.alert-active{animation:alert-pulse 1.5s infinite}
+.vital-card.emergency-critical{animation:emerg-pulse 0.6s infinite!important}
 @keyframes alert-pulse{0%,100%{border-color:rgba(255,107,107,0.3)}50%{border-color:rgba(255,107,107,0.9)}}
+@keyframes emerg-pulse{0%,100%{border-color:rgba(255,34,34,0.4);background:#111827}50%{border-color:#ff2222;background:#1e0a0a}}
 .vital-label{font-size:11px;font-family:'Space Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.75rem}
 .vital-value{font-family:'Space Mono',monospace;font-size:36px;font-weight:700;line-height:1;margin-bottom:4px}
 .vital-unit{font-size:13px;color:var(--text2);margin-bottom:0.5rem}
@@ -49,19 +49,16 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 .vital-bar{height:3px;border-radius:2px;transition:width 0.8s ease}
 .vital-icon{position:absolute;top:1rem;right:1rem;font-size:24px;opacity:0.12}
 
-/* CHARTS */
 .charts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:1.5rem}
 .chart-card{background:var(--bg2);border:0.5px solid var(--card-border);border-radius:14px;padding:1.25rem}
 .chart-title{font-size:11px;font-family:'Space Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:1rem}
 .chart-wrap{position:relative;height:130px}
 
-/* BOTTOM */
-.bottom-grid{display:grid;grid-template-columns:1.2fr 0.8fr;gap:1rem}
+.bottom-grid{display:grid;grid-template-columns:1.2fr 0.8fr;gap:1rem;margin-bottom:1.5rem}
 .map-card{background:var(--bg2);border:0.5px solid var(--card-border);border-radius:14px;overflow:hidden}
 .map-title{font-size:11px;font-family:'Space Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:1px;padding:1rem 1.25rem 0.75rem}
 #map{height:240px;width:100%}
 .map-coords{font-size:11px;color:var(--text3);font-family:'Space Mono',monospace;padding:0.6rem 1.25rem 0.8rem}
-
 .alerts-card{background:var(--bg2);border:0.5px solid var(--card-border);border-radius:14px;padding:1.25rem}
 .alerts-title{font-size:11px;font-family:'Space Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:1rem}
 .alert-item{display:flex;align-items:flex-start;gap:8px;padding:9px 11px;border-radius:8px;margin-bottom:6px;font-size:12px;line-height:1.5}
@@ -74,30 +71,144 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 .alert-dot-success{background:#00ff9d}
 .no-alerts{font-size:13px;color:var(--text3);text-align:center;padding:2rem 0}
 
-/* FOOTER */
+/* ===== EMERGENCY PANEL ===== */
+.emergency-section{margin-bottom:1.5rem}
+.emergency-panel{background:var(--bg2);border:0.5px solid rgba(255,107,107,0.25);border-radius:14px;padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.emergency-label-group{display:flex;flex-direction:column;gap:5px}
+.emergency-label{font-size:11px;font-family:'Space Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+.emergency-desc{font-size:12px;color:var(--text3);max-width:500px;line-height:1.5}
+.esp-ip-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.esp-ip-label{font-size:11px;color:var(--text3);font-family:'Space Mono',monospace;white-space:nowrap}
+.esp-ip-input{background:var(--bg3);border:0.5px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:6px 10px;width:160px;outline:none}
+.esp-ip-input:focus{border-color:var(--accent)}
+.esp-ip-hint{font-size:10px;color:var(--text3)}
+.emergency-buttons{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn-emergency{background:#c0392b;border:none;border-radius:10px;color:#fff;cursor:pointer;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;letter-spacing:1px;padding:13px 28px;text-transform:uppercase;transition:transform 0.1s,background 0.2s;white-space:nowrap}
+.btn-emergency:hover{background:#e74c3c;transform:scale(1.02)}
+.btn-emergency:active{transform:scale(0.97)}
+.btn-emergency:disabled{background:#3a1a1a;color:#664444;cursor:not-allowed;transform:none}
+.btn-clear{background:transparent;border:0.5px solid rgba(255,107,107,0.4);border-radius:10px;color:#ffaaaa;cursor:pointer;font-family:'Space Mono',monospace;font-size:12px;padding:10px 20px;transition:background 0.2s;white-space:nowrap;display:none}
+.btn-clear:hover{background:rgba(255,107,107,0.1)}
+
+/* ===== FLASHING BANNER ===== */
+.emergency-banner{display:none;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;align-items:center;gap:1rem;flex-wrap:wrap;background:#1a0505;border:1px solid #ff2222}
+.emergency-banner.visible{display:flex;animation:banner-flash 0.9s infinite}
+@keyframes banner-flash{0%,100%{border-color:#ff2222;background:#1a0505}50%{border-color:#ff6666;background:#260a0a}}
+.banner-icon{font-size:26px;animation:blink 0.9s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.banner-text{flex:1;min-width:200px}
+.banner-title{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:#ff4444;letter-spacing:1px}
+.banner-sub{font-size:12px;color:#ff8888;margin-top:3px;line-height:1.4}
+.banner-meta{font-family:'Space Mono',monospace;font-size:11px;color:#ff6666;margin-top:4px}
+
+/* ===== FULLSCREEN OVERLAY ===== */
+.emergency-overlay{display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;background:rgba(12,0,0,0.97)}
+.emergency-overlay.visible{display:flex;animation:overlay-bg 0.9s infinite}
+@keyframes overlay-bg{0%,100%{background:rgba(12,0,0,0.97)}50%{background:rgba(28,0,0,0.99)}}
+.overlay-sos{font-family:'Space Mono',monospace;font-size:60px;font-weight:700;color:#ff2222;letter-spacing:8px;animation:sos-pulse 0.9s infinite;margin-bottom:0.5rem}
+@keyframes sos-pulse{0%,100%{opacity:1;text-shadow:0 0 30px #ff2222}50%{opacity:0.6;text-shadow:0 0 10px #ff2222}}
+.overlay-title{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:#ff6666;letter-spacing:3px;margin-bottom:0.5rem}
+.overlay-patient{font-size:13px;color:#ff9999;margin-bottom:0.25rem}
+.overlay-time{font-family:'Space Mono',monospace;font-size:11px;color:#ff5555;margin-bottom:1.75rem}
+.overlay-vitals{display:flex;gap:1.5rem;margin-bottom:2rem;flex-wrap:wrap;justify-content:center}
+.overlay-vital{background:rgba(255,34,34,0.1);border:1px solid rgba(255,34,34,0.4);border-radius:12px;padding:1rem 1.5rem;min-width:110px}
+.overlay-vital-label{font-size:10px;color:#ff8888;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.overlay-vital-value{font-size:28px;font-weight:700;color:#ff4444;font-family:'Space Mono',monospace}
+.overlay-vital-unit{font-size:11px;color:#ff6666;margin-top:2px}
+.overlay-esp-status{font-family:'Space Mono',monospace;font-size:11px;margin-bottom:1.5rem;padding:7px 18px;border-radius:20px;border:0.5px solid rgba(255,100,100,0.3);color:#ff9999;max-width:400px}
+.btn-overlay-clear{background:#c0392b;border:none;border-radius:12px;color:#fff;cursor:pointer;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;letter-spacing:2px;padding:13px 36px;text-transform:uppercase;transition:background 0.2s}
+.btn-overlay-clear:hover{background:#e74c3c}
+
+/* ===== CONFIRM DIALOG ===== */
+.confirm-backdrop{display:none;position:fixed;inset:0;z-index:8888;background:rgba(0,0,0,0.85);align-items:center;justify-content:center}
+.confirm-backdrop.visible{display:flex}
+.confirm-box{background:#111827;border:1px solid rgba(255,107,107,0.4);border-radius:16px;padding:2rem;max-width:420px;width:90%;text-align:center}
+.confirm-icon{font-size:42px;margin-bottom:0.75rem}
+.confirm-title{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:#ff6666;margin-bottom:0.5rem;letter-spacing:1px}
+.confirm-msg{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:1rem}
+.confirm-target{font-family:'Space Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:1.5rem;padding:6px 14px;background:var(--bg3);border-radius:8px;display:inline-block}
+.confirm-btns{display:flex;gap:10px;justify-content:center}
+.btn-yes{background:#c0392b;border:none;border-radius:10px;color:#fff;cursor:pointer;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;padding:11px 24px;letter-spacing:1px}
+.btn-yes:hover{background:#e74c3c}
+.btn-no{background:transparent;border:0.5px solid var(--text3);border-radius:10px;color:var(--text2);cursor:pointer;font-size:13px;padding:11px 24px}
+.btn-no:hover{background:var(--bg3)}
+
+/* ===== EVENT LOG ===== */
+.log-card{background:var(--bg2);border:0.5px solid var(--card-border);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem}
+.log-title{font-size:11px;font-family:'Space Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:1rem}
+.log-list{max-height:160px;overflow-y:auto}
+.log-item{display:flex;gap:10px;padding:6px 0;border-bottom:0.5px solid rgba(255,255,255,0.04);font-size:12px;align-items:flex-start}
+.log-item:last-child{border-bottom:none}
+.log-time{font-family:'Space Mono',monospace;font-size:10px;color:var(--text3);white-space:nowrap;margin-top:2px;flex-shrink:0}
+.log-emerg{color:#ff8888}
+.log-clear{color:#80ffcc}
+.log-info{color:var(--text2)}
+.log-empty{font-size:12px;color:var(--text3);text-align:center;padding:1rem 0}
+
 .footer{text-align:center;margin-top:2rem;font-size:11px;color:var(--text3);font-family:'Space Mono',monospace}
 
-/* RESPONSIVE */
 @media(max-width:700px){
-  .vitals-grid{grid-template-columns:1fr}
-  .charts-grid{grid-template-columns:1fr}
-  .bottom-grid{grid-template-columns:1fr}
+  .vitals-grid,.charts-grid,.bottom-grid{grid-template-columns:1fr}
   .vital-value{font-size:28px}
   .header{flex-direction:column;align-items:flex-start}
   .last-updated{margin-left:0}
+  .overlay-sos{font-size:40px}
+  .overlay-title{font-size:16px}
+  .overlay-vitals{gap:0.75rem}
+  .emergency-panel{flex-direction:column;align-items:flex-start}
 }
 @media(max-width:900px){
-  .vitals-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .charts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vitals-grid,.charts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .bottom-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
+<!-- FULLSCREEN OVERLAY -->
+<div class="emergency-overlay" id="emergency-overlay">
+  <div class="overlay-sos">SOS</div>
+  <div class="overlay-title">EMERGENCY ALERT ACTIVE</div>
+  <div class="overlay-patient">Patient: Demo Patient &nbsp;|&nbsp; Ward B-2 &nbsp;|&nbsp; ID: SS-20260317</div>
+  <div class="overlay-time" id="overlay-time"></div>
+  <div class="overlay-vitals">
+    <div class="overlay-vital">
+      <div class="overlay-vital-label">Heart Rate</div>
+      <div class="overlay-vital-value" id="ov-hr">—</div>
+      <div class="overlay-vital-unit">BPM</div>
+    </div>
+    <div class="overlay-vital">
+      <div class="overlay-vital-label">SpO₂</div>
+      <div class="overlay-vital-value" id="ov-spo2">—</div>
+      <div class="overlay-vital-unit">%</div>
+    </div>
+    <div class="overlay-vital">
+      <div class="overlay-vital-label">Temperature</div>
+      <div class="overlay-vital-value" id="ov-temp">—</div>
+      <div class="overlay-vital-unit">°C</div>
+    </div>
+  </div>
+  <div class="overlay-esp-status" id="overlay-esp-status">Contacting ESP32 device...</div>
+  <button class="btn-overlay-clear" onclick="cancelEmergency()">&#10004;&nbsp; Clear Emergency</button>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-backdrop" id="confirm-backdrop">
+  <div class="confirm-box">
+    <div class="confirm-icon">&#9888;</div>
+    <div class="confirm-title">Confirm Emergency Trigger</div>
+    <div class="confirm-msg">This will send an HTTP signal to your ESP32, display an SOS alert on the OLED, force all vitals to critical mode on the dashboard, and log the event with timestamp. Only use this in a real emergency.</div>
+    <div class="confirm-target" id="confirm-target">ESP32 Target: 192.168.1.100</div>
+    <div class="confirm-btns">
+      <button class="btn-yes" onclick="confirmEmergency()">&#9888; Yes, Trigger</button>
+      <button class="btn-no" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
 <div class="dashboard">
 
-  <!-- HEADER -->
   <div class="header">
     <div class="logo">
       <div class="logo-icon">&#9763;</div>
@@ -106,13 +217,22 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
         <div class="logo-sub">Remote Health Monitoring System</div>
       </div>
     </div>
-    <div class="status-badge">
-      <div class="pulse-dot"></div>
-      Device Online
+    <div class="header-right">
+      <div class="status-badge"><div class="pulse-dot"></div>Device Online</div>
     </div>
   </div>
 
-  <!-- PATIENT BAR -->
+  <!-- FLASHING BANNER (shown during emergency) -->
+  <div class="emergency-banner" id="emergency-banner">
+    <div class="banner-icon">&#9888;</div>
+    <div class="banner-text">
+      <div class="banner-title">EMERGENCY ACTIVE — CRITICAL ALERT</div>
+      <div class="banner-sub">Manual emergency triggered. ESP32 notified. All vitals in critical simulation mode.</div>
+      <div class="banner-meta" id="banner-meta"></div>
+    </div>
+    <button class="btn-clear" style="display:block" onclick="cancelEmergency()">Clear Emergency</button>
+  </div>
+
   <div class="patient-bar">
     <div class="patient-avatar">DP</div>
     <div>
@@ -122,9 +242,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
     <div class="last-updated" id="last-updated">Last updated: —</div>
   </div>
 
-  <!-- VITAL CARDS -->
   <div class="vitals-grid">
-
     <div class="vital-card" id="hr-card">
       <div class="vital-icon">&#9829;</div>
       <div class="vital-label">Heart Rate</div>
@@ -134,7 +252,6 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       <div class="vital-range">Normal: 60 – 100 BPM</div>
       <div class="vital-bar-bg"><div class="vital-bar" id="hr-bar" style="background:var(--hr-color);width:0%"></div></div>
     </div>
-
     <div class="vital-card" id="spo2-card">
       <div class="vital-icon">&#9827;</div>
       <div class="vital-label">Blood Oxygen SpO₂</div>
@@ -144,7 +261,6 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       <div class="vital-range">Normal: 95 – 100%</div>
       <div class="vital-bar-bg"><div class="vital-bar" id="spo2-bar" style="background:var(--spo2-color);width:0%"></div></div>
     </div>
-
     <div class="vital-card" id="temp-card">
       <div class="vital-icon">&#9670;</div>
       <div class="vital-label">Body Temperature</div>
@@ -154,10 +270,8 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       <div class="vital-range">Normal: 36 – 37.5°C</div>
       <div class="vital-bar-bg"><div class="vital-bar" id="temp-bar" style="background:var(--temp-color);width:0%"></div></div>
     </div>
-
   </div>
 
-  <!-- CHARTS -->
   <div class="charts-grid">
     <div class="chart-card">
       <div class="chart-title">Heart Rate vs Time</div>
@@ -173,251 +287,298 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
     </div>
   </div>
 
-  <!-- MAP + ALERTS -->
   <div class="bottom-grid">
-
     <div class="map-card">
       <div class="map-title">Patient Location (GPS)</div>
       <div id="map"></div>
-      <div class="map-coords" id="map-coords">17.3850° N, 78.4867° E &nbsp;–&nbsp; Hyderabad, Telangana</div>
+      <div class="map-coords">17.3850° N, 78.4867° E &nbsp;–&nbsp; Hyderabad, Telangana</div>
     </div>
-
     <div class="alerts-card">
       <div class="alerts-title">Health Alerts</div>
-      <div id="alerts-list">
-        <div class="no-alerts">Initialising sensors...</div>
+      <div id="alerts-list"><div class="no-alerts">Initialising sensors...</div></div>
+    </div>
+  </div>
+
+  <!-- EMERGENCY CONTROL PANEL -->
+  <div class="emergency-section">
+    <div class="emergency-panel">
+      <div class="emergency-label-group">
+        <div class="emergency-label">Emergency Control</div>
+        <div class="emergency-desc">Manually trigger a critical emergency alert. Sends an HTTP request to the ESP32 device, which will display an SOS message on the OLED screen.</div>
+        <div class="esp-ip-row">
+          <span class="esp-ip-label">ESP32 IP Address:</span>
+          <input class="esp-ip-input" id="esp-ip" type="text" value="192.168.1.100" placeholder="192.168.x.x"/>
+          <span class="esp-ip-hint">Find this in your Arduino Serial Monitor</span>
+        </div>
+      </div>
+      <div class="emergency-buttons">
+        <button class="btn-emergency" id="btn-trigger" onclick="openConfirm()">&#9888;&nbsp; Trigger Emergency</button>
+        <button class="btn-clear" id="btn-clear-panel" onclick="cancelEmergency()">Clear Emergency</button>
       </div>
     </div>
+  </div>
 
+  <!-- EVENT LOG -->
+  <div class="log-card">
+    <div class="log-title">Event Log</div>
+    <div class="log-list" id="log-list"><div class="log-empty">No events yet.</div></div>
   </div>
 
   <div class="footer">SIXTH SENSE &nbsp;|&nbsp; ESP32 IoT Health Monitor &nbsp;|&nbsp; &copy; 2026</div>
+</div>
 
-</div><!-- end .dashboard -->
-
-<!-- SCRIPTS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
 <script>
-/* ============================================================
-   SIXTH SENSE – Dashboard Logic
-   To connect real Firebase data, replace the tick() simulation
-   with a Firebase Realtime Database listener (see comments).
-   ============================================================ */
+/*
+=================================================================
+  SIXTH SENSE — Dashboard + Emergency System
+  Emergency: HTTP GET http://<ESP32_IP>/emergency?state=1
+  Cancel:    HTTP GET http://<ESP32_IP>/emergency?state=0
+
+  ---- ARDUINO CODE FOR ESP32 ----
+  Add this to your existing ESP32 sketch:
+
+  #include <WebServer.h>
+  WebServer server(80);
+
+  void setupWebServer() {
+    server.on("/emergency", []() {
+      String s = server.arg("state");
+      if (s == "1") {
+        display.clearDisplay();
+        display.setTextSize(2);
+        display.setTextColor(SSD1306_WHITE);
+        display.setCursor(0, 0);
+        display.println("!! SOS !!");
+        display.setTextSize(1);
+        display.println("EMERGENCY ALERT");
+        display.println("Contact caretaker");
+        display.display();
+      } else {
+        display.clearDisplay();
+        display.display();
+        // resume normal display loop
+      }
+      server.send(200, "text/plain", "OK");
+    });
+    server.begin();
+  }
+
+  In setup():   setupWebServer();
+  In loop():    server.handleClient();
+=================================================================
+*/
 
 const MAX_POINTS = 20;
-const PATIENT_LAT = 17.3850;
-const PATIENT_LNG = 78.4867;
+const PATIENT_LAT = 17.3850, PATIENT_LNG = 78.4867;
+let emergencyActive = false;
+let emergencyStartTime = null;
+let logEntries = [];
 
-/* ---- State ---- */
 const state = {
-  hr: [], spo2: [], temp: [], labels: [],
-  hrNow: 78, spo2Now: 97, tempNow: 36.6
+  hr:[], spo2:[], temp:[], labels:[],
+  hrNow:78, spo2Now:97, tempNow:36.6
 };
 
-/* ---- Utility ---- */
-function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
 function timeLabel(){
-  const d = new Date();
+  const d=new Date();
   return d.getHours().toString().padStart(2,'0')+':'+
          d.getMinutes().toString().padStart(2,'0')+':'+
          d.getSeconds().toString().padStart(2,'0');
 }
 
-/* ---- Chart factory ---- */
-function makeChart(id, hexColor, yMin, yMax){
-  const ctx = document.getElementById(id).getContext('2d');
-  return new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: [],
-      datasets: [{
-        data: [],
-        borderColor: hexColor,
-        borderWidth: 1.5,
-        fill: true,
-        backgroundColor: function(ctx){
-          const g = ctx.chart.ctx.createLinearGradient(0,0,0,130);
-          // Parse hex to rgba for gradient
-          const r = parseInt(hexColor.slice(1,3),16);
-          const g2 = parseInt(hexColor.slice(3,5),16);
-          const b = parseInt(hexColor.slice(5,7),16);
-          g.addColorStop(0, 'rgba('+r+','+g2+','+b+',0.18)');
-          g.addColorStop(1, 'rgba('+r+','+g2+','+b+',0.0)');
-          return g;
-        },
-        tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 4
-      }]
-    },
-    options: {
-      animation: false,
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode:'index', intersect:false },
-      scales: {
-        x: { display: false },
-        y: {
-          display: true, min: yMin, max: yMax,
-          grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
-          ticks: {
-            color: '#4a5a78',
-            font: { size: 9, family: 'Space Mono' },
-            maxTicksLimit: 4
-          },
-          border: { display: false }
-        }
-      },
-      plugins: { legend: { display: false }, tooltip: { enabled: true } }
-    }
+function makeChart(id,hex,yMin,yMax){
+  const ctx=document.getElementById(id).getContext('2d');
+  return new Chart(ctx,{
+    type:'line',
+    data:{labels:[],datasets:[{data:[],borderColor:hex,borderWidth:1.5,fill:true,
+      backgroundColor:function(c){
+        const g=c.chart.ctx.createLinearGradient(0,0,0,130);
+        const r=parseInt(hex.slice(1,3),16),g2=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+        g.addColorStop(0,'rgba('+r+','+g2+','+b+',0.18)');
+        g.addColorStop(1,'rgba('+r+','+g2+','+b+',0)');
+        return g;
+      },tension:0.4,pointRadius:0,pointHoverRadius:4}]},
+    options:{animation:false,responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      scales:{x:{display:false},y:{display:true,min:yMin,max:yMax,
+        grid:{color:'rgba(255,255,255,0.04)',drawBorder:false},
+        ticks:{color:'#4a5a78',font:{size:9,family:'Space Mono'},maxTicksLimit:4},
+        border:{display:false}}},
+      plugins:{legend:{display:false},tooltip:{enabled:true}}}
   });
 }
 
-const charts = {
-  hr:   makeChart('chart-hr',   '#ff6b9d', 40,  140),
-  spo2: makeChart('chart-spo2', '#00d4ff', 85,  102),
-  temp: makeChart('chart-temp', '#ffd93d', 35.0, 40.0)
+const charts={
+  hr:  makeChart('chart-hr',  '#ff6b9d',40,140),
+  spo2:makeChart('chart-spo2','#00d4ff',85,102),
+  temp:makeChart('chart-temp','#ffd93d',35,40)
 };
 
-/* ---- Map ---- */
-const map = L.map('map', { zoomControl: true, attributionControl: false }).setView([PATIENT_LAT, PATIENT_LNG], 14);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+const map=L.map('map',{zoomControl:true,attributionControl:false}).setView([PATIENT_LAT,PATIENT_LNG],14);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+const mIcon=L.divIcon({className:'',
+  html:'<div style="width:14px;height:14px;background:#00d4ff;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px #00d4ff"></div>',
+  iconSize:[14,14],iconAnchor:[7,7]});
+L.marker([PATIENT_LAT,PATIENT_LNG],{icon:mIcon}).addTo(map).bindPopup('<b>Demo Patient</b><br>Live GPS Location');
 
-const markerIcon = L.divIcon({
-  className: '',
-  html: '<div style="width:14px;height:14px;background:#00d4ff;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px #00d4ff"></div>',
-  iconSize: [14,14],
-  iconAnchor: [7,7]
-});
-const marker = L.marker([PATIENT_LAT, PATIENT_LNG], { icon: markerIcon })
-  .addTo(map)
-  .bindPopup('<b>Demo Patient</b><br>Live GPS Location');
-
-/* ---- Push data to chart ---- */
-function pushData(chart, arr, val){
-  arr.push(val);
-  if(arr.length > MAX_POINTS) arr.shift();
-  chart.data.datasets[0].data = [...arr];
+function pushData(chart,arr,val){
+  arr.push(val); if(arr.length>MAX_POINTS)arr.shift();
+  chart.data.datasets[0].data=[...arr];
 }
-
 function pushLabel(){
-  state.labels.push(timeLabel());
-  if(state.labels.length > MAX_POINTS) state.labels.shift();
-  Object.values(charts).forEach(c => { c.data.labels = [...state.labels]; c.update('none'); });
+  state.labels.push(timeLabel()); if(state.labels.length>MAX_POINTS)state.labels.shift();
+  Object.values(charts).forEach(c=>{c.data.labels=[...state.labels];c.update('none');});
 }
-
-/* ---- Update vital card ---- */
-function updateVitalCard(valId, barId, val, min, max, decimals){
-  const el = document.getElementById(valId);
-  el.textContent = decimals > 0 ? val.toFixed(decimals) : val;
-  const pct = clamp(((val - min)/(max - min))*100, 0, 100);
-  document.getElementById(barId).style.width = pct.toFixed(1)+'%';
+function updateVitalCard(valId,barId,val,min,max,dec){
+  document.getElementById(valId).textContent=dec>0?val.toFixed(dec):val;
+  document.getElementById(barId).style.width=clamp(((val-min)/(max-min))*100,0,100).toFixed(1)+'%';
 }
-
-/* ---- Trend arrow ---- */
 function getTrend(arr){
-  if(arr.length < 2) return '';
-  const d = arr[arr.length-1] - arr[arr.length-2];
-  if(d > 0.5) return '<span style="color:#ff6b6b">&#9650; Rising</span>';
-  if(d < -0.5) return '<span style="color:#00d4ff">&#9660; Falling</span>';
+  if(arr.length<2)return '';
+  const d=arr[arr.length-1]-arr[arr.length-2];
+  if(d>0.5)return '<span style="color:#ff6b6b">&#9650; Rising</span>';
+  if(d<-0.5)return '<span style="color:#00d4ff">&#9660; Falling</span>';
   return '<span style="color:#8a9ab8">&#9644; Stable</span>';
 }
-
-/* ---- Alert logic ---- */
-function updateAlerts(hr, spo2, temp){
-  // Clear alert animation
-  ['hr-card','spo2-card','temp-card'].forEach(id =>
-    document.getElementById(id).classList.remove('alert-active'));
-
-  const alerts = [];
-
-  if(hr > 120){
-    alerts.push({cls:'danger', msg:'High Heart Rate — '+hr+' BPM (threshold: >120)'});
-    document.getElementById('hr-card').classList.add('alert-active');
-  } else if(hr < 50){
-    alerts.push({cls:'danger', msg:'Low Heart Rate — '+hr+' BPM (threshold: <50)'});
-    document.getElementById('hr-card').classList.add('alert-active');
-  }
-
-  if(spo2 < 90){
-    alerts.push({cls:'danger', msg:'Critical Blood Oxygen — '+spo2+'% (threshold: <90%)'});
-    document.getElementById('spo2-card').classList.add('alert-active');
-  } else if(spo2 < 95){
-    alerts.push({cls:'warning', msg:'Low Blood Oxygen — '+spo2+'% (below normal <95%)'});
-  }
-
-  if(temp > 38){
-    alerts.push({cls:'warning', msg:'Elevated Temperature — '+temp.toFixed(1)+'°C (threshold: >38°C)'});
-    document.getElementById('temp-card').classList.add('alert-active');
-  }
-
-  const list = document.getElementById('alerts-list');
-  if(alerts.length === 0){
-    list.innerHTML = '<div class="alert-item alert-success"><div class="alert-dot alert-dot-success"></div><div>All vitals within normal range</div></div>';
-  } else {
-    list.innerHTML = alerts.map(a =>
-      '<div class="alert-item alert-'+a.cls+'"><div class="alert-dot alert-dot-'+a.cls+'"></div><div>'+a.msg+'</div></div>'
-    ).join('');
-  }
+function updateAlerts(hr,spo2,temp){
+  if(emergencyActive)return;
+  ['hr-card','spo2-card','temp-card'].forEach(id=>document.getElementById(id).classList.remove('alert-active','emergency-critical'));
+  const a=[];
+  if(hr>120){a.push({c:'danger',m:'High Heart Rate — '+hr+' BPM (>120)'});document.getElementById('hr-card').classList.add('alert-active');}
+  else if(hr<50){a.push({c:'danger',m:'Low Heart Rate — '+hr+' BPM (<50)'});document.getElementById('hr-card').classList.add('alert-active');}
+  if(spo2<90){a.push({c:'danger',m:'Critical Blood Oxygen — '+spo2+'% (<90%)'});document.getElementById('spo2-card').classList.add('alert-active');}
+  else if(spo2<95)a.push({c:'warning',m:'Low Blood Oxygen — '+spo2+'% (<95%)'});
+  if(temp>38){a.push({c:'warning',m:'Elevated Temperature — '+temp.toFixed(1)+'°C (>38°C)'});document.getElementById('temp-card').classList.add('alert-active');}
+  const list=document.getElementById('alerts-list');
+  list.innerHTML=a.length===0
+    ?'<div class="alert-item alert-success"><div class="alert-dot alert-dot-success"></div><div>All vitals within normal range</div></div>'
+    :a.map(x=>'<div class="alert-item alert-'+x.c+'"><div class="alert-dot alert-dot-'+x.c+'"></div><div>'+x.m+'</div></div>').join('');
 }
 
-/* ============================================================
-   SIMULATED DATA TICK
-   Replace this function with Firebase listener for real data.
+function addLog(msg,cls){
+  logEntries.unshift({t:timeLabel(),msg,cls});
+  if(logEntries.length>40)logEntries.pop();
+  const el=document.getElementById('log-list');
+  el.innerHTML=logEntries.map(e=>'<div class="log-item"><span class="log-time">'+e.t+'</span><span class="'+e.cls+'">'+e.msg+'</span></div>').join('');
+}
 
-   HOW TO CONNECT FIREBASE:
-   1. Add Firebase SDK scripts below this script tag
-   2. Initialize Firebase with your config
-   3. Use this listener instead of setInterval:
+function sendToESP32(s){
+  const ip=document.getElementById('esp-ip').value.trim();
+  if(!ip){addLog('No ESP32 IP set — HTTP call skipped','log-info');return;}
+  const url='http://'+ip+'/emergency?state='+s;
+  addLog('HTTP → ESP32: '+url,'log-info');
+  const ctrl=new AbortController();
+  setTimeout(()=>ctrl.abort(),6000);
+  fetch(url,{mode:'no-cors',signal:ctrl.signal})
+    .then(()=>{
+      if(s===1){
+        addLog('ESP32 responded — OLED SOS alert active','log-clear');
+        document.getElementById('overlay-esp-status').textContent='ESP32 Notified — OLED SOS Alert Active';
+      } else {
+        addLog('ESP32 responded — OLED cleared','log-clear');
+      }
+    })
+    .catch(err=>{
+      addLog('ESP32 unreachable ('+err.message+') — check IP & Wi-Fi','log-info');
+      if(s===1) document.getElementById('overlay-esp-status').textContent='ESP32 unreachable — check IP address & Wi-Fi';
+    });
+}
 
-   const dbRef = firebase.database().ref('patients/demo/latest');
-   dbRef.on('value', function(snapshot){
-     const data = snapshot.val();
-     if(!data) return;
-     state.hrNow   = data.heart_rate;
-     state.spo2Now = data.spo2;
-     state.tempNow = data.temperature;
-     // Update GPS marker:
-     // marker.setLatLng([data.latitude, data.longitude]);
-     // map.setView([data.latitude, data.longitude]);
-     renderUpdate();
-   });
-   ============================================================ */
+function openConfirm(){
+  const ip=document.getElementById('esp-ip').value.trim()||'(not set)';
+  document.getElementById('confirm-target').textContent='ESP32 Target: '+ip;
+  document.getElementById('confirm-backdrop').classList.add('visible');
+}
+function closeConfirm(){
+  document.getElementById('confirm-backdrop').classList.remove('visible');
+}
+
+function confirmEmergency(){
+  closeConfirm();
+  emergencyActive=true;
+  emergencyStartTime=new Date();
+
+  state.hrNow=138; state.spo2Now=87; state.tempNow=39.2;
+
+  document.getElementById('emergency-banner').classList.add('visible');
+  document.getElementById('banner-meta').textContent='Triggered at '+emergencyStartTime.toLocaleTimeString()+' on '+emergencyStartTime.toLocaleDateString();
+
+  ['hr-card','spo2-card','temp-card'].forEach(id=>{
+    document.getElementById(id).classList.remove('alert-active');
+    document.getElementById(id).classList.add('emergency-critical');
+  });
+
+  document.getElementById('alerts-list').innerHTML=
+    '<div class="alert-item alert-danger"><div class="alert-dot alert-dot-danger"></div><div>EMERGENCY ACTIVE — Manual trigger by operator</div></div>'+
+    '<div class="alert-item alert-danger"><div class="alert-dot alert-dot-danger"></div><div>Heart Rate: '+state.hrNow+' BPM — Critical High</div></div>'+
+    '<div class="alert-item alert-danger"><div class="alert-dot alert-dot-danger"></div><div>SpO₂: '+state.spo2Now+'% — Critical Low</div></div>'+
+    '<div class="alert-item alert-danger"><div class="alert-dot alert-dot-danger"></div><div>Temperature: '+state.tempNow.toFixed(1)+'°C — High Fever</div></div>';
+
+  document.getElementById('ov-hr').textContent=state.hrNow;
+  document.getElementById('ov-spo2').textContent=state.spo2Now;
+  document.getElementById('ov-temp').textContent=state.tempNow.toFixed(1);
+  document.getElementById('overlay-time').textContent='Triggered: '+emergencyStartTime.toLocaleTimeString()+' — '+emergencyStartTime.toLocaleDateString();
+  document.getElementById('overlay-esp-status').textContent='Contacting ESP32 device...';
+  document.getElementById('emergency-overlay').classList.add('visible');
+
+  document.getElementById('btn-trigger').disabled=true;
+  document.getElementById('btn-clear-panel').style.display='block';
+
+  addLog('EMERGENCY TRIGGERED by operator','log-emerg');
+  sendToESP32(1);
+  renderUpdate();
+}
+
+function cancelEmergency(){
+  emergencyActive=false;
+  document.getElementById('emergency-overlay').classList.remove('visible');
+  document.getElementById('emergency-banner').classList.remove('visible');
+  ['hr-card','spo2-card','temp-card'].forEach(id=>document.getElementById(id).classList.remove('emergency-critical','alert-active'));
+  state.hrNow=78; state.spo2Now=97; state.tempNow=36.6;
+  document.getElementById('btn-trigger').disabled=false;
+  document.getElementById('btn-clear-panel').style.display='none';
+  addLog('Emergency cleared by operator — normal monitoring resumed','log-clear');
+  sendToESP32(0);
+  renderUpdate();
+}
 
 function tick(){
-  // Simulate realistic sensor drift
-  state.hrNow   = Math.round(clamp(state.hrNow   + (Math.random()-0.48)*4,    45,  130));
-  state.spo2Now = Math.round(clamp(state.spo2Now + (Math.random()-0.5)*1,     88,  100));
-  state.tempNow = Math.round(clamp(state.tempNow + (Math.random()-0.5)*0.15, 35.5, 39.5)*10)/10;
+  if(emergencyActive){
+    state.hrNow  =Math.round(clamp(state.hrNow  +(Math.random()-0.4)*3, 125,145));
+    state.spo2Now=Math.round(clamp(state.spo2Now+(Math.random()-0.5)*1,  85, 90));
+    state.tempNow=Math.round(clamp(state.tempNow+(Math.random()-0.5)*0.1,38.8,39.6)*10)/10;
+    document.getElementById('ov-hr').textContent=state.hrNow;
+    document.getElementById('ov-spo2').textContent=state.spo2Now;
+    document.getElementById('ov-temp').textContent=state.tempNow.toFixed(1);
+  } else {
+    state.hrNow  =Math.round(clamp(state.hrNow  +(Math.random()-0.48)*4,  45,130));
+    state.spo2Now=Math.round(clamp(state.spo2Now+(Math.random()-0.5)*1,   88,100));
+    state.tempNow=Math.round(clamp(state.tempNow+(Math.random()-0.5)*0.15,35.5,39.5)*10)/10;
+  }
   renderUpdate();
 }
 
 function renderUpdate(){
-  pushData(charts.hr,   state.hr,   state.hrNow);
-  pushData(charts.spo2, state.spo2, state.spo2Now);
-  pushData(charts.temp, state.temp, state.tempNow);
+  pushData(charts.hr,  state.hr,  state.hrNow);
+  pushData(charts.spo2,state.spo2,state.spo2Now);
+  pushData(charts.temp,state.temp,state.tempNow);
   pushLabel();
-
-  updateVitalCard('hr-val',   'hr-bar',   state.hrNow,   40,  140, 0);
-  updateVitalCard('spo2-val', 'spo2-bar', state.spo2Now, 85,  100, 0);
-  updateVitalCard('temp-val', 'temp-bar', state.tempNow, 35,  40,  1);
-
-  document.getElementById('hr-trend').innerHTML   = getTrend(state.hr);
-  document.getElementById('spo2-trend').innerHTML = getTrend(state.spo2);
-  document.getElementById('temp-trend').innerHTML = getTrend(state.temp);
-
-  updateAlerts(state.hrNow, state.spo2Now, state.tempNow);
-
-  document.getElementById('last-updated').textContent =
-    'Last updated: ' + new Date().toLocaleTimeString();
+  updateVitalCard('hr-val',  'hr-bar',  state.hrNow,  40,140,0);
+  updateVitalCard('spo2-val','spo2-bar',state.spo2Now, 85,100,0);
+  updateVitalCard('temp-val','temp-bar',state.tempNow, 35, 40,1);
+  document.getElementById('hr-trend').innerHTML  =getTrend(state.hr);
+  document.getElementById('spo2-trend').innerHTML=getTrend(state.spo2);
+  document.getElementById('temp-trend').innerHTML=getTrend(state.temp);
+  if(!emergencyActive)updateAlerts(state.hrNow,state.spo2Now,state.tempNow);
+  document.getElementById('last-updated').textContent='Last updated: '+new Date().toLocaleTimeString();
 }
 
-/* Start simulation — updates every 7 seconds */
+addLog('Dashboard initialised — monitoring active','log-info');
 tick();
-setInterval(tick, 7000);
+setInterval(tick,7000);
 </script>
-
 </body>
 </html>
