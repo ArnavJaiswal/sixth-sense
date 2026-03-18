@@ -526,9 +526,9 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
           <label class="send-option"><input type="checkbox" id="inc-id" checked/> Patient ID &amp; timestamp</label>
           <label class="send-option"><input type="checkbox" id="inc-ai"/> Include AI health summary</label>
         </div>
-        <button class="btn-send-doctor" id="btn-send-doctor" onclick="sendToDoctor()">&#9993; Send Report via Email</button>
+        <button class="btn-send-doctor" id="btn-send-doctor" onclick="sendToDoctor()">&#9993; Open Email App with Report</button>
         <div class="send-status" id="send-status"></div>
-        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">Uses EmailJS (free) — set up your keys at emailjs.com</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">Opens your phone or computer's email app with the report pre-filled — no API or account needed</div>
       </div>
 
       <!-- Doctor Chat -->
@@ -583,37 +583,24 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-<!-- EmailJS — free at emailjs.com, replace YOUR_PUBLIC_KEY -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 
 <script>
 /* ================================================================
-   SIXTH SENSE — Dashboard with AI Summary + Doctor Panel
+   SIXTH SENSE — Dashboard
+   No external APIs required for core functionality.
 
-   EMAILJS SETUP (free at emailjs.com):
-   1. Create account at emailjs.com
-   2. Add Email Service (Gmail works) → copy Service ID
-   3. Create Email Template with these variables:
-        {{to_email}}, {{to_name}}, {{from_name}},
-        {{subject}}, {{message}}
-      Copy Template ID
-   4. Copy your Public Key from Account → API Keys
-   5. Fill in the three constants below:
+   SEND TO DOCTOR: uses native mailto: — opens Gmail/Outlook/etc.
+   with the full report pre-filled. No account or key needed.
 
-   FIREBASE SETUP (for doctor chat):
-   Replace the firebaseConfig object with your own project config
-   from Firebase Console → Project Settings → Your Apps
+   DOCTOR CHAT: uses Firebase Realtime Database.
+   Replace FIREBASE_CONFIG below with your project's config.
+   Get it from: Firebase Console → Project Settings → Your Apps
 
-   GEMINI API (free — aistudio.google.com):
-   1. Go to aistudio.google.com
-   2. Click "Get API Key" → "Create API key"
-   3. Paste it into GEMINI_API_KEY below
-   Free tier: 15 requests/min, 1 million tokens/day — more than enough.
+   HEALTH SUMMARY: 100% rule-based, runs in browser, no API.
 ================================================================ */
 
-const EMAILJS_PUBLIC_KEY  = 'YOUR_EMAILJS_PUBLIC_KEY';
-const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
+// No email API needed — uses native mailto: to open the device email app
 
 // Firebase config — replace with your own
 const FIREBASE_CONFIG = {
@@ -625,8 +612,7 @@ const FIREBASE_CONFIG = {
 
 // Health summary uses built-in rule-based analysis — no API key needed
 
-/* ---- Init EmailJS ---- */
-try { emailjs.init(EMAILJS_PUBLIC_KEY); } catch(e) {}
+
 
 /* ---- Constants ---- */
 const MAX_POINTS = 20;
@@ -1031,15 +1017,21 @@ function generateAISummary(){
 }
 
 /* ================================================================
-   SEND TO DOCTOR — EmailJS
+   SEND TO DOCTOR — pure mailto: link
+   Opens the user's own email app (Gmail, Outlook, etc.)
+   with everything pre-filled. Zero API, zero keys, zero accounts.
 ================================================================ */
-async function sendToDoctor(){
-  const email = document.getElementById('doctor-email').value.trim();
-  const name  = document.getElementById('doctor-name').value.trim() || 'Doctor';
-  const note  = document.getElementById('doctor-note').value.trim();
+function sendToDoctor(){
+  const email  = document.getElementById('doctor-email').value.trim();
+  const name   = document.getElementById('doctor-name').value.trim() || 'Doctor';
+  const note   = document.getElementById('doctor-note').value.trim();
   const status = document.getElementById('send-status');
 
-  if(!email){ status.textContent='Please enter doctor email.'; status.className='send-status err'; return; }
+  if(!email){
+    status.textContent = 'Please enter the doctor\'s email address.';
+    status.className   = 'send-status err';
+    return;
+  }
 
   const incVitals = document.getElementById('inc-vitals').checked;
   const incFall   = document.getElementById('inc-fall').checked;
@@ -1047,40 +1039,72 @@ async function sendToDoctor(){
   const incId     = document.getElementById('inc-id').checked;
   const incAI     = document.getElementById('inc-ai').checked;
 
-  let msg = '=== SIXTH SENSE PATIENT REPORT ===\n\n';
+  // Build the email body
+  let body = '=== SIXTH SENSE PATIENT REPORT ===\n\n';
 
-  if(incId) msg += `Patient: Demo Patient\nID: SS-20260317\nTimestamp: ${new Date().toLocaleString()}\n\n`;
-
-  if(incVitals) msg += `CURRENT VITALS\n--------------\nHeart Rate : ${state.hrNow} BPM\nBlood Oxygen (SpO₂): ${state.spo2Now}%\nTemperature: ${state.tempNow.toFixed(1)}°C\n\n`;
-
-  if(incFall) msg += `FALL DETECTION (MPU6050)\n------------------------\nTotal falls: ${fallCount}\nLast fall: ${lastFallTime ? lastFallTime.toLocaleString() : 'None recorded'}\nEmergency active: ${emergencyActive ? 'YES' : 'No'}\n\n`;
-
-  if(incLog && logEntries.length>0) msg += `RECENT EVENT LOG\n----------------\n`+logEntries.slice(0,15).map(e=>e.t+' — '+e.msg).join('\n')+'\n\n';
-
-  if(incAI && lastAISummary) msg += `AI HEALTH SUMMARY\n-----------------\n${lastAISummary}\n\n`;
-
-  if(note) msg += `CARETAKER NOTE\n--------------\n${note}\n\n`;
-
-  msg += '---\nSent via Sixth Sense IoT Health Monitor\nThis is an automated report — not a substitute for clinical assessment.';
-
-  document.getElementById('btn-send-doctor').disabled=true;
-  status.textContent='Sending...';status.className='send-status';
-
-  try {
-    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-      to_email:  email,
-      to_name:   name,
-      from_name: 'Sixth Sense Monitor',
-      subject:   'Patient Health Report — Demo Patient ['+new Date().toLocaleTimeString()+']',
-      message:   msg
-    });
-    status.textContent='Report sent to '+email;status.className='send-status ok';
-    addLog('Health report sent to doctor: '+email,'log-doctor');
-  } catch(err) {
-    status.textContent='Send failed: '+err.text;status.className='send-status err';
-    addLog('Email send failed: '+err.text,'log-info');
+  if(incId){
+    body += 'PATIENT DETAILS\n';
+    body += '---------------\n';
+    body += 'Name      : Demo Patient\n';
+    body += 'ID        : SS-20260317\n';
+    body += 'Timestamp : ' + new Date().toLocaleString() + '\n\n';
   }
-  document.getElementById('btn-send-doctor').disabled=false;
+
+  if(incVitals){
+    body += 'CURRENT VITALS\n';
+    body += '--------------\n';
+    body += 'Heart Rate       : ' + state.hrNow + ' BPM'
+          + (state.hrNow < 60 || state.hrNow > 100 ? ' [OUTSIDE NORMAL]' : ' [Normal]') + '\n';
+    body += 'Blood Oxygen SpO2: ' + state.spo2Now + '%'
+          + (state.spo2Now < 95 ? ' [OUTSIDE NORMAL]' : ' [Normal]') + '\n';
+    body += 'Body Temperature : ' + state.tempNow.toFixed(1) + ' C'
+          + (state.tempNow < 36 || state.tempNow > 37.5 ? ' [OUTSIDE NORMAL]' : ' [Normal]') + '\n\n';
+  }
+
+  if(incFall){
+    body += 'FALL DETECTION (MPU6050)\n';
+    body += '------------------------\n';
+    body += 'Total falls     : ' + fallCount + '\n';
+    body += 'Last fall       : ' + (lastFallTime ? lastFallTime.toLocaleString() : 'None recorded') + '\n';
+    body += 'Emergency active: ' + (emergencyActive ? 'YES' : 'No') + '\n\n';
+  }
+
+  if(incAI && lastAISummary){
+    body += 'HEALTH ANALYSIS\n';
+    body += '---------------\n';
+    body += lastAISummary + '\n\n';
+  }
+
+  if(incLog && logEntries.length > 0){
+    body += 'RECENT EVENT LOG\n';
+    body += '----------------\n';
+    body += logEntries.slice(0, 15).map(e => e.t + '  ' + e.msg).join('\n') + '\n\n';
+  }
+
+  if(note){
+    body += 'CARETAKER NOTE\n';
+    body += '--------------\n';
+    body += note + '\n\n';
+  }
+
+  body += '---\n';
+  body += 'Sent via Sixth Sense IoT Health Monitor\n';
+  body += 'This report is for informational purposes only and is not a substitute for clinical assessment.';
+
+  const subject = 'Patient Health Report — Demo Patient [' + new Date().toLocaleTimeString() + ']';
+
+  // mailto: opens whatever email app is set as default on the device
+  // encodeURIComponent handles all special chars, newlines, etc.
+  const mailtoLink = 'mailto:' + encodeURIComponent(email)
+    + '?subject=' + encodeURIComponent(subject)
+    + '&body='    + encodeURIComponent(body);
+
+  // Open email app
+  window.location.href = mailtoLink;
+
+  status.textContent = 'Email app opened — review and click Send.';
+  status.className   = 'send-status ok';
+  addLog('Doctor report prepared — email app opened for ' + email, 'log-doctor');
 }
 
 /* ================================================================
