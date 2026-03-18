@@ -50,7 +50,46 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 .vital-range{font-size:11px;color:var(--text3)}
 .vital-bar-bg{height:3px;background:var(--bg3);border-radius:2px;margin-top:10px;overflow:hidden}
 .vital-bar{height:3px;border-radius:2px;transition:width 0.8s ease}
-.vital-icon{position:absolute;top:1rem;right:1rem;font-size:24px;opacity:0.12}
+.vital-icon{position:absolute;top:1rem;right:1rem;font-size:24px;opacity:0.2;cursor:pointer;transition:opacity 0.2s,transform 0.2s;user-select:none}
+.vital-icon:hover{opacity:0.75;transform:scale(1.18)}
+
+/* PDF BUTTON */
+.btn-pdf{background:rgba(0,212,255,0.1);border:0.5px solid rgba(0,212,255,0.35);border-radius:10px;color:var(--accent);cursor:pointer;font-family:'Space Mono',monospace;font-size:12px;padding:7px 16px;transition:background 0.2s;white-space:nowrap}
+.btn-pdf:hover{background:rgba(0,212,255,0.2)}
+
+/* VITAL DETAIL DIALOG */
+.vd-backdrop{display:none;position:fixed;inset:0;z-index:7777;background:rgba(0,0,0,0.82);align-items:center;justify-content:center;padding:1rem}
+.vd-backdrop.visible{display:flex}
+.vd-box{background:#111827;border:0.5px solid rgba(0,212,255,0.2);border-radius:18px;padding:2rem;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;position:relative}
+.vd-close{position:absolute;top:1rem;right:1rem;background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:6px;transition:color 0.2s}
+.vd-close:hover{color:var(--text)}
+.vd-icon{font-size:44px;text-align:center;margin-bottom:0.4rem}
+.vd-title{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;text-align:center;margin-bottom:0.5rem;letter-spacing:1px;color:var(--text)}
+.vd-current{font-family:'Space Mono',monospace;font-size:38px;font-weight:700;text-align:center;margin-bottom:0.4rem}
+.vd-status-pill{text-align:center;margin-bottom:1.25rem}
+.vd-status-pill span{font-size:11px;font-family:'Space Mono',monospace;padding:4px 14px;border-radius:12px;text-transform:uppercase;letter-spacing:1px}
+.pill-normal{background:rgba(0,255,157,0.1);border:0.5px solid rgba(0,255,157,0.3);color:#80ffcc}
+.pill-caution{background:rgba(255,217,61,0.1);border:0.5px solid rgba(255,217,61,0.3);color:#ffe090}
+.pill-critical{background:rgba(255,107,107,0.1);border:0.5px solid rgba(255,107,107,0.3);color:#ffaaaa}
+.vd-section{font-size:10px;font-family:'Space Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:1rem 0 0.5rem;padding-bottom:4px;border-bottom:0.5px solid rgba(255,255,255,0.06)}
+.vd-desc{font-size:13px;color:var(--text2);line-height:1.75}
+.vd-ranges{display:flex;flex-direction:column;gap:5px}
+.vd-range-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:8px;padding:7px 12px;font-size:12px}
+.vd-range-label{color:var(--text2)}
+.vd-range-val{font-family:'Space Mono',monospace;font-size:11px}
+.vd-explanation{font-size:13px;line-height:1.7;padding:10px 14px;border-radius:10px;border-left:3px solid;margin-top:4px}
+.vd-trend-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.vd-trend-chip{background:var(--bg3);border-radius:8px;padding:6px 10px;font-family:'Space Mono',monospace;font-size:13px;text-align:center;min-width:52px}
+.vd-trend-chip span{display:block;font-size:10px;color:var(--text3);margin-bottom:2px}
+.vd-advice{font-size:13px;color:var(--text2);line-height:1.75;padding:10px 14px;background:var(--bg3);border-radius:10px;margin-top:4px}
+.vd-footer{font-size:11px;color:var(--text3);text-align:center;margin-top:1.25rem;line-height:1.5;font-style:italic}
+
+/* PDF PRINT */
+@media print{
+  body>*{display:none!important}
+  #pdf-content{display:block!important;position:static!important;left:0!important;top:0!important;width:100%!important;visibility:visible!important}
+  #pdf-content *{visibility:visible!important}
+}
 
 /* CHARTS */
 .charts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:1.5rem}
@@ -353,6 +392,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       <div><div class="logo-text">SIXTH SENSE</div><div class="logo-sub">Remote Health Monitoring System</div></div>
     </div>
     <div class="header-right">
+      <button class="btn-pdf" onclick="downloadPDF()">&#8659; Download PDF</button>
       <div class="status-badge"><div class="pulse-dot"></div>Device Online</div>
     </div>
   </div>
@@ -389,7 +429,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
   <!-- VITALS -->
   <div class="vitals-grid">
     <div class="vital-card" id="hr-card">
-      <div class="vital-icon">&#9829;</div>
+      <div class="vital-icon" onclick="openVitalDialog('hr')" title="Click for details">&#9829;</div>
       <div class="vital-label">Heart Rate</div>
       <div class="vital-value" id="hr-val" style="color:var(--hr-color)">—</div>
       <div class="vital-unit">BPM</div>
@@ -398,7 +438,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       <div class="vital-bar-bg"><div class="vital-bar" id="hr-bar" style="background:var(--hr-color);width:0%"></div></div>
     </div>
     <div class="vital-card" id="spo2-card">
-      <div class="vital-icon">&#9827;</div>
+      <div class="vital-icon" onclick="openVitalDialog('spo2')" title="Click for details">&#9827;</div>
       <div class="vital-label">Blood Oxygen SpO₂</div>
       <div class="vital-value" id="spo2-val" style="color:var(--spo2-color)">—</div>
       <div class="vital-unit">%</div>
@@ -407,7 +447,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       <div class="vital-bar-bg"><div class="vital-bar" id="spo2-bar" style="background:var(--spo2-color);width:0%"></div></div>
     </div>
     <div class="vital-card" id="temp-card">
-      <div class="vital-icon">&#9670;</div>
+      <div class="vital-icon" onclick="openVitalDialog('temp')" title="Click for details">&#9670;</div>
       <div class="vital-label">Body Temperature</div>
       <div class="vital-value" id="temp-val" style="color:var(--temp-color)">—</div>
       <div class="vital-unit">°C</div>
@@ -574,6 +614,32 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
   <div class="log-card">
     <div class="log-title">Event Log</div>
     <div class="log-list" id="log-list"><div class="log-empty">No events yet.</div></div>
+  </div>
+
+  <!-- VITAL DETAIL DIALOG -->
+  <div class="vd-backdrop" id="vd-backdrop" onclick="closeVitalDialog()">
+    <div class="vd-box" onclick="event.stopPropagation()">
+      <button class="vd-close" onclick="closeVitalDialog()">&#10005;</button>
+      <div class="vd-icon" id="vd-icon"></div>
+      <div class="vd-title" id="vd-title"></div>
+      <div class="vd-current" id="vd-current"></div>
+      <div class="vd-status-pill" id="vd-status-pill"></div>
+      <div class="vd-section">What this measures</div>
+      <div class="vd-desc" id="vd-desc"></div>
+      <div class="vd-section">Normal ranges</div>
+      <div class="vd-ranges" id="vd-ranges"></div>
+      <div class="vd-section">Current reading explained</div>
+      <div class="vd-explanation" id="vd-explanation"></div>
+      <div class="vd-section">Recent trend (last 5 readings)</div>
+      <div class="vd-trend-row" id="vd-trend-row"></div>
+      <div class="vd-section">What to do if abnormal</div>
+      <div class="vd-advice" id="vd-advice"></div>
+      <div class="vd-footer">This information is for monitoring purposes only. Always consult a qualified doctor for medical decisions.</div>
+    </div>
+  </div>
+
+  <!-- HIDDEN PDF CONTENT (rendered off-screen, printed to PDF) -->
+  <div id="pdf-content" style="display:none;position:absolute;left:-9999px;top:0;width:800px;font-family:'DM Sans',sans-serif;background:#fff;color:#111;padding:40px">
   </div>
 
   <div class="footer">SIXTH SENSE &nbsp;|&nbsp; ESP32 + MPU6050 IoT Health Monitor &nbsp;|&nbsp; &copy; 2026</div>
@@ -1200,6 +1266,257 @@ addLog('Dashboard initialised — all systems active','log-info');
 initFirebaseChat();
 tick();
 setInterval(tick,7000);
+
+/* ================================================================
+   VITAL DETAIL DIALOG
+   Opens when user clicks the icon on any vital card
+================================================================ */
+const VITAL_INFO = {
+  hr: {
+    icon: '&#9829;',
+    color: '#ff6b9d',
+    title: 'HEART RATE',
+    unit: 'BPM',
+    desc: 'Heart rate is the number of times your heart beats per minute. The MAX30102 sensor measures this using photoplethysmography (PPG) — it shines infrared light through the fingertip and detects blood volume changes with each heartbeat.',
+    ranges: [
+      { label: 'Bradycardia (critical)', val: '< 40 BPM', color: '#ff8888' },
+      { label: 'Bradycardia (low)', val: '40 – 59 BPM', color: '#ffe090' },
+      { label: 'Normal resting', val: '60 – 100 BPM', color: '#80ffcc' },
+      { label: 'Mild tachycardia', val: '101 – 120 BPM', color: '#ffe090' },
+      { label: 'Tachycardia (high)', val: '> 120 BPM', color: '#ff8888' }
+    ],
+    advice: 'If heart rate is below 50 or above 120 BPM at rest — ensure the patient is calm and the sensor is properly placed. If the reading persists, contact a doctor. For values above 150 BPM or below 40 BPM, seek immediate medical attention.',
+    getValue: () => state.hrNow,
+    getHistory: () => state.hr,
+    getStatus: (v) => v >= 60 && v <= 100 ? 'Normal' : (v >= 50 && v <= 120 ? 'Caution' : 'Critical')
+  },
+  spo2: {
+    icon: '&#9827;',
+    color: '#00d4ff',
+    title: 'BLOOD OXYGEN SpO₂',
+    unit: '%',
+    desc: 'Blood oxygen saturation (SpO₂) measures the percentage of haemoglobin in your blood that is carrying oxygen. The MAX30102 sensor uses two wavelengths of light (red and infrared) to calculate this. Normal blood should be 95–100% saturated.',
+    ranges: [
+      { label: 'Normal', val: '95 – 100%', color: '#80ffcc' },
+      { label: 'Mild hypoxemia', val: '90 – 94%', color: '#ffe090' },
+      { label: 'Moderate hypoxemia', val: '85 – 89%', color: '#ff8888' },
+      { label: 'Severe hypoxemia', val: '< 85%', color: '#ff4444' }
+    ],
+    advice: 'If SpO₂ drops below 95%, check the sensor placement — ensure the finger is clean and the sensor is snug. If the reading is confirmed below 90%, consider supplemental oxygen and contact a doctor immediately. Below 85% is a medical emergency.',
+    getValue: () => state.spo2Now,
+    getHistory: () => state.spo2,
+    getStatus: (v) => v >= 95 ? 'Normal' : (v >= 90 ? 'Caution' : 'Critical')
+  },
+  temp: {
+    icon: '&#9670;',
+    color: '#ffd93d',
+    title: 'BODY TEMPERATURE',
+    unit: '°C',
+    desc: 'Body temperature reflects the balance between heat produced and heat lost by the body. The LM35 analog sensor measures skin temperature via voltage output (10mV per °C). Core body temperature is typically 36–37.5°C for a healthy adult at rest.',
+    ranges: [
+      { label: 'Hypothermia', val: '< 35°C', color: '#ff8888' },
+      { label: 'Below normal', val: '35 – 35.9°C', color: '#ffe090' },
+      { label: 'Normal', val: '36 – 37.5°C', color: '#80ffcc' },
+      { label: 'Low-grade fever', val: '37.6 – 38°C', color: '#ffe090' },
+      { label: 'Fever', val: '38.1 – 39°C', color: '#ffe090' },
+      { label: 'High fever', val: '39.1 – 40°C', color: '#ff8888' },
+      { label: 'Hyperpyrexia', val: '> 40°C', color: '#ff4444' }
+    ],
+    advice: 'For temperatures above 38°C, administer prescribed fever medication, ensure the patient drinks fluids, and monitor closely. For temperatures above 39.5°C or below 35°C, contact a doctor immediately. Consistently abnormal readings may indicate sensor placement issues — ensure LM35 contact is firm.',
+    getValue: () => state.tempNow,
+    getHistory: () => state.temp,
+    getStatus: (v) => v >= 36 && v <= 37.5 ? 'Normal' : (v >= 35 && v <= 39 ? 'Caution' : 'Critical')
+  }
+};
+
+function openVitalDialog(type) {
+  const info   = VITAL_INFO[type];
+  const val    = info.getValue();
+  const hist   = info.getHistory();
+  const status = info.getStatus(val);
+  const pillClass = status === 'Normal' ? 'pill-normal' : status === 'Caution' ? 'pill-caution' : 'pill-critical';
+
+  // Current reading explanation
+  let explanation, explanationBorder;
+  if(type === 'hr'){
+    if(val < 50)      { explanation = val+' BPM is below the normal resting range. This could indicate bradycardia, athletic conditioning, medication effects, or sensor contact issues.'; explanationBorder = '#ff8888'; }
+    else if(val <= 100){ explanation = val+' BPM is a healthy resting heart rate. The heart is pumping efficiently and oxygen delivery to the body appears normal.'; explanationBorder = '#80ffcc'; }
+    else if(val <= 120){ explanation = val+' BPM is mildly elevated. This could be due to physical activity, stress, caffeine, pain, fever, or anxiety. Monitor for resolution.'; explanationBorder = '#ffe090'; }
+    else               { explanation = val+' BPM is significantly elevated (tachycardia). This requires medical evaluation to rule out arrhythmia, dehydration, or cardiac issues.'; explanationBorder = '#ff8888'; }
+  } else if(type === 'spo2'){
+    if(val >= 95)      { explanation = val+'% is a healthy oxygen saturation level. The blood is carrying adequate oxygen to all tissues and organs.'; explanationBorder = '#80ffcc'; }
+    else if(val >= 90) { explanation = val+'% is below the normal range. This is called mild hypoxemia. The patient may feel short of breath or fatigued. Check sensor placement first.'; explanationBorder = '#ffe090'; }
+    else               { explanation = val+'% is a critically low oxygen level. Immediate medical intervention is required — this can cause organ damage if prolonged.'; explanationBorder = '#ff8888'; }
+  } else {
+    if(val < 35)         { explanation = val.toFixed(1)+'°C is dangerously low (hypothermia). Warm the patient gradually and seek emergency care.'; explanationBorder = '#ff8888'; }
+    else if(val <= 37.5) { explanation = val.toFixed(1)+'°C is a normal body temperature. The body\'s thermal regulation is functioning properly.'; explanationBorder = '#80ffcc'; }
+    else if(val <= 38.5) { explanation = val.toFixed(1)+'°C is a low-grade fever. This is often the body\'s immune response to an infection. Monitor and ensure hydration.'; explanationBorder = '#ffe090'; }
+    else if(val <= 39.5) { explanation = val.toFixed(1)+'°C is a significant fever. Administer fever medication as prescribed and consult a doctor if it does not reduce.'; explanationBorder = '#ff8888'; }
+    else                 { explanation = val.toFixed(1)+'°C is hyperpyrexia — a medical emergency. Contact emergency services immediately.'; explanationBorder = '#ff4444'; }
+  }
+
+  // Build trend chips from last 5 readings
+  const recent = hist.slice(-5);
+  const trendChips = recent.length > 0
+    ? recent.map((v,i) => `<div class="vd-trend-chip"><span>T-${recent.length-1-i}</span>${type==='temp'?parseFloat(v).toFixed(1):v}</div>`).join('')
+    : '<div style="font-size:12px;color:var(--text3)">Collecting readings...</div>';
+
+  // Build range rows
+  const rangeRows = info.ranges.map(r =>
+    `<div class="vd-range-row"><span class="vd-range-label">${r.label}</span><span class="vd-range-val" style="color:${r.color}">${r.val}</span></div>`
+  ).join('');
+
+  // Populate dialog
+  document.getElementById('vd-icon').innerHTML     = `<span style="color:${info.color}">${info.icon}</span>`;
+  document.getElementById('vd-title').textContent  = info.title;
+  document.getElementById('vd-current').innerHTML  = `<span style="color:${info.color}">${type==='temp'?parseFloat(val).toFixed(1):val}</span> <span style="font-size:18px;color:var(--text2)">${info.unit}</span>`;
+  document.getElementById('vd-status-pill').innerHTML = `<span class="${pillClass}">${status}</span>`;
+  document.getElementById('vd-desc').textContent   = info.desc;
+  document.getElementById('vd-ranges').innerHTML   = rangeRows;
+  document.getElementById('vd-explanation').style.borderColor = explanationBorder;
+  document.getElementById('vd-explanation').style.background  = explanationBorder+'18';
+  document.getElementById('vd-explanation').style.color       = 'var(--text)';
+  document.getElementById('vd-explanation').textContent       = explanation;
+  document.getElementById('vd-trend-row').innerHTML           = trendChips;
+  document.getElementById('vd-advice').textContent            = info.advice;
+
+  document.getElementById('vd-backdrop').classList.add('visible');
+}
+
+function closeVitalDialog(){
+  document.getElementById('vd-backdrop').classList.remove('visible');
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeVitalDialog(); });
+
+/* ================================================================
+   PDF DOWNLOAD
+   Builds a clean printable HTML report and uses window.print()
+   No library needed — browser's built-in Save as PDF handles it
+================================================================ */
+function downloadPDF(){
+  const now      = new Date().toLocaleString();
+  const hrStatus = state.hrNow >= 60 && state.hrNow <= 100 ? 'Normal' : state.hrNow >= 50 && state.hrNow <= 120 ? 'Caution' : 'Critical';
+  const s2Status = state.spo2Now >= 95 ? 'Normal' : state.spo2Now >= 90 ? 'Caution' : 'Critical';
+  const tpStatus = state.tempNow >= 36 && state.tempNow <= 37.5 ? 'Normal' : state.tempNow >= 35 && state.tempNow <= 39 ? 'Caution' : 'Critical';
+
+  const statusColor = s => s==='Normal'?'#16a34a':s==='Caution'?'#ca8a04':'#dc2626';
+  const statusBg    = s => s==='Normal'?'#f0fdf4':s==='Caution'?'#fefce8':'#fef2f2';
+
+  const logRows = logEntries.slice(0,20).map(e =>
+    `<tr><td style="padding:5px 10px;font-family:monospace;font-size:11px;color:#666;border-bottom:1px solid #f0f0f0;white-space:nowrap">${e.t}</td><td style="padding:5px 10px;font-size:12px;color:#333;border-bottom:1px solid #f0f0f0">${e.msg}</td></tr>`
+  ).join('');
+
+  const recentHR  = state.hr.slice(-5).join(', ')  || '—';
+  const recentSpo = state.spo2.slice(-5).join(', ') || '—';
+  const recentTmp = state.temp.slice(-5).map(v=>parseFloat(v).toFixed(1)).join(', ') || '—';
+
+  const html = `
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;color:#111;max-width:740px;margin:0 auto">
+
+      <!-- Header -->
+      <div style="background:#0a0f1e;color:#e8edf8;padding:24px 28px;border-radius:10px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:20px;font-weight:700;letter-spacing:2px;color:#00d4ff">SIXTH SENSE</div>
+          <div style="font-size:12px;color:#8a9ab8;margin-top:3px">Remote Health Monitoring System</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:#8a9ab8">Report generated</div>
+          <div style="font-size:12px;font-family:monospace;color:#00d4ff">${now}</div>
+        </div>
+      </div>
+
+      <!-- Patient -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:20px">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Patient Information</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div><div style="font-size:11px;color:#94a3b8">Name</div><div style="font-size:14px;font-weight:600">Demo Patient</div></div>
+          <div><div style="font-size:11px;color:#94a3b8">Patient ID</div><div style="font-size:14px;font-weight:600;font-family:monospace">SS-20260317</div></div>
+          <div><div style="font-size:11px;color:#94a3b8">Ward</div><div style="font-size:14px;font-weight:600">B-2</div></div>
+        </div>
+      </div>
+
+      <!-- Vitals -->
+      <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Current Vital Signs</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+        <div style="background:${statusBg(hrStatus)};border:1px solid ${statusColor(hrStatus)}44;border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Heart Rate</div>
+          <div style="font-size:32px;font-weight:700;color:#e11d48;font-family:monospace">${state.hrNow}</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:8px">BPM</div>
+          <div style="font-size:10px;font-weight:600;padding:2px 10px;border-radius:10px;background:${statusColor(hrStatus)};color:#fff;display:inline-block">${hrStatus}</div>
+        </div>
+        <div style="background:${statusBg(s2Status)};border:1px solid ${statusColor(s2Status)}44;border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Blood Oxygen SpO₂</div>
+          <div style="font-size:32px;font-weight:700;color:#0891b2;font-family:monospace">${state.spo2Now}</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:8px">%</div>
+          <div style="font-size:10px;font-weight:600;padding:2px 10px;border-radius:10px;background:${statusColor(s2Status)};color:#fff;display:inline-block">${s2Status}</div>
+        </div>
+        <div style="background:${statusBg(tpStatus)};border:1px solid ${statusColor(tpStatus)}44;border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Body Temperature</div>
+          <div style="font-size:32px;font-weight:700;color:#d97706;font-family:monospace">${parseFloat(state.tempNow).toFixed(1)}</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:8px">°C</div>
+          <div style="font-size:10px;font-weight:600;padding:2px 10px;border-radius:10px;background:${statusColor(tpStatus)};color:#fff;display:inline-block">${tpStatus}</div>
+        </div>
+      </div>
+
+      <!-- Trends -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:20px">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Recent Trends (Last 5 Readings)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">
+          <div><div style="color:#94a3b8;margin-bottom:3px">Heart Rate</div><div style="font-family:monospace">${recentHR} BPM</div></div>
+          <div><div style="color:#94a3b8;margin-bottom:3px">SpO₂</div><div style="font-family:monospace">${recentSpo} %</div></div>
+          <div><div style="color:#94a3b8;margin-bottom:3px">Temperature</div><div style="font-family:monospace">${recentTmp} °C</div></div>
+        </div>
+      </div>
+
+      <!-- Fall Detection -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:20px">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Fall Detection — MPU6050</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">
+          <div><div style="color:#94a3b8;margin-bottom:3px">Total Falls</div><div style="font-family:monospace;font-weight:600;color:${fallCount>0?'#dc2626':'#16a34a'}">${fallCount}</div></div>
+          <div><div style="color:#94a3b8;margin-bottom:3px">Last Fall</div><div style="font-size:11px;font-family:monospace">${lastFallTime?lastFallTime.toLocaleString():'None recorded'}</div></div>
+          <div><div style="color:#94a3b8;margin-bottom:3px">Emergency</div><div style="font-family:monospace;font-weight:600;color:${emergencyActive?'#dc2626':'#16a34a'}">${emergencyActive?'ACTIVE':'Inactive'}</div></div>
+        </div>
+      </div>
+
+      <!-- Health Summary (if generated) -->
+      ${lastAISummary ? `
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px 20px;margin-bottom:20px">
+        <div style="font-size:11px;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Health Analysis Summary</div>
+        <div style="font-size:12px;color:#333;white-space:pre-line;line-height:1.7">${lastAISummary}</div>
+      </div>` : ''}
+
+      <!-- Event Log -->
+      ${logEntries.length > 0 ? `
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Recent Event Log</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;background:#f8fafc;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0">
+          <thead><tr style="background:#e2e8f0"><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b">Time</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b">Event</th></tr></thead>
+          <tbody>${logRows}</tbody>
+        </table>
+      </div>` : ''}
+
+      <!-- Footer -->
+      <div style="border-top:1px solid #e2e8f0;padding-top:14px;font-size:11px;color:#94a3b8;text-align:center;line-height:1.6">
+        Generated by Sixth Sense IoT Health Monitor &nbsp;|&nbsp; ${now}<br/>
+        This report is for monitoring purposes only and is not a substitute for professional medical advice.
+      </div>
+    </div>`;
+
+  // Inject into hidden container and trigger print
+  const container = document.getElementById('pdf-content');
+  container.innerHTML = html;
+  container.style.display = 'block';
+
+  setTimeout(() => {
+    window.print();
+    // Hide after printing
+    setTimeout(() => { container.style.display = 'none'; }, 1000);
+  }, 200);
+
+  addLog('PDF report generated and sent to print dialog','log-info');
+}
 </script>
 
 <!-- Firebase SDK — only needed for doctor chat -->
