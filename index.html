@@ -486,14 +486,14 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
         <div class="ai-header-left">
           <div class="ai-icon">&#129504;</div>
           <div>
-            <div class="ai-title">AI Health Summary</div>
-            <div class="ai-subtitle">Powered by Google Gemini (free) — analyses vitals, trends &amp; fall history</div>
+            <div class="ai-title">Health Summary</div>
+            <div class="ai-subtitle">Rule-based clinical analysis — no API, no internet, 100% private</div>
           </div>
         </div>
-        <button class="btn-ai-generate" id="btn-ai" onclick="generateAISummary()">&#9889; Generate Summary</button>
+        <button class="btn-ai-generate" id="btn-ai" onclick="generateAISummary()">&#9889; Analyse Now</button>
       </div>
       <div class="ai-body" id="ai-body">
-        <div class="ai-empty">Click "Generate Summary" to get an AI-powered analysis of the patient's current health data. This is not a medical diagnosis — always consult a qualified doctor.</div>
+        <div class="ai-empty">Click "Analyse Now" to get an instant rule-based assessment of the patient's vitals and fall history. No internet or API key required — runs entirely in the browser.</div>
       </div>
     </div>
   </div>
@@ -623,8 +623,7 @@ const FIREBASE_CONFIG = {
   projectId:   'your-project'
 };
 
-// FREE — get yours at aistudio.google.com (no credit card needed)
-const GEMINI_API_KEY = 'AIzaSyDAUBLjJ2ukT1nH575-37dMt75ovIb4IUE';
+// Health summary uses built-in rule-based analysis — no API key needed
 
 /* ---- Init EmailJS ---- */
 try { emailjs.init(EMAILJS_PUBLIC_KEY); } catch(e) {}
@@ -853,115 +852,182 @@ function openConfirm(){const ip=document.getElementById('esp-ip').value.trim()||
 function closeConfirm(){document.getElementById('confirm-backdrop').classList.remove('visible');}
 
 /* ================================================================
-   AI HEALTH SUMMARY — calls Anthropic API
-   Builds a structured health report from current vitals + history
+   HEALTH SUMMARY — 100% rule-based, no API, no key, no internet
+   Uses WHO / standard clinical thresholds for each vital.
+   Runs instantly in the browser — completely private & secure.
 ================================================================ */
-async function generateAISummary(){
-  const btn=document.getElementById('btn-ai');
-  const body=document.getElementById('ai-body');
-  btn.disabled=true;
-  body.innerHTML='<div class="ai-loading"><div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>Analysing patient health data...</div>';
+function generateAISummary(){
+  const btn  = document.getElementById('btn-ai');
+  const body = document.getElementById('ai-body');
+  btn.disabled = true;
 
-  const recentHR  = state.hr.slice(-5).join(', ') || state.hrNow;
-  const recentSpo = state.spo2.slice(-5).join(', ') || state.spo2Now;
-  const recentTmp = state.temp.slice(-5).map(v=>v.toFixed(1)).join(', ') || state.tempNow;
-  const logText   = logEntries.slice(0,10).map(e=>e.t+' — '+e.msg).join('\n') || 'No events recorded';
+  const hr   = state.hrNow;
+  const spo2 = state.spo2Now;
+  const temp = state.tempNow;
 
-  const prompt = `You are a clinical health monitoring assistant. Analyse the following patient sensor data and provide a concise, structured health summary. Be factual, avoid alarmist language, and always recommend consulting a real doctor for diagnosis.
+  /* ---- Per-vital rule engine ---- */
 
-PATIENT: Demo Patient | ID: SS-20260317 | ${new Date().toLocaleString()}
-
-CURRENT VITALS:
-- Heart Rate: ${state.hrNow} BPM (normal: 60–100)
-- Blood Oxygen (SpO₂): ${state.spo2Now}% (normal: 95–100%)
-- Body Temperature: ${state.tempNow.toFixed(1)}°C (normal: 36–37.5°C)
-
-RECENT TREND (last 5 readings):
-- HR trend: ${recentHR}
-- SpO₂ trend: ${recentSpo}
-- Temp trend: ${recentTmp}
-
-FALL DETECTION (MPU6050):
-- Total falls recorded: ${fallCount}
-- Last fall: ${lastFallTime ? lastFallTime.toLocaleString() : 'None'}
-- Emergency active: ${emergencyActive ? 'YES' : 'No'}
-
-RECENT EVENTS:
-${logText}
-
-Please respond with a JSON object only, no markdown, in this exact format:
-{
-  "overall_status": "Normal" | "Caution" | "Critical",
-  "summary": "2-3 sentence plain English summary of the patient's condition",
-  "vitals_analysis": {
-    "heart_rate": "brief assessment",
-    "spo2": "brief assessment",
-    "temperature": "brief assessment"
-  },
-  "fall_risk": "brief fall risk assessment",
-  "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"],
-  "alert_level": "green" | "yellow" | "red"
-}`;
-
-  try {
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + GEMINI_API_KEY,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
-        })
-      }
-    );
-
-    const data   = await response.json();
-
-    // Gemini wraps response in candidates[0].content.parts[0].text
-    if(data.error){ throw new Error(data.error.message); }
-    const raw    = data.candidates[0].content.parts[0].text;
-    const clean  = raw.replace(/```json|```/g,'').trim();
-    const parsed = JSON.parse(clean);
-    lastAISummary = clean;
-
-    const badgeClass = parsed.overall_status==='Normal'?'ai-badge-normal':parsed.overall_status==='Critical'?'ai-badge-critical':'ai-badge-caution';
-    const recs = (parsed.recommendations||[]).map(r=>'<li style="margin-bottom:4px">'+r+'</li>').join('');
-
-    body.innerHTML = `
-      <div class="ai-result">
-        <div class="ai-result-header">
-          <span class="ai-result-badge ${badgeClass}">${parsed.overall_status}</span>
-          <span style="font-size:12px;color:var(--text2)">AI-generated — not a medical diagnosis</span>
-        </div>
-        <div style="margin-bottom:0.75rem">${parsed.summary}</div>
-        <div class="ai-section-label">Vitals analysis</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:0.75rem">
-          <div style="background:var(--bg3);border-radius:8px;padding:8px 10px">
-            <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:3px">HEART RATE</div>
-            <div style="font-size:12px;color:var(--text)">${parsed.vitals_analysis.heart_rate}</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:8px;padding:8px 10px">
-            <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:3px">SPO₂</div>
-            <div style="font-size:12px;color:var(--text)">${parsed.vitals_analysis.spo2}</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:8px;padding:8px 10px">
-            <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:3px">TEMPERATURE</div>
-            <div style="font-size:12px;color:var(--text)">${parsed.vitals_analysis.temperature}</div>
-          </div>
-        </div>
-        <div class="ai-section-label">Fall risk</div>
-        <div style="font-size:12px;margin-bottom:0.75rem">${parsed.fall_risk}</div>
-        <div class="ai-section-label">Recommendations</div>
-        <ul style="font-size:12px;padding-left:1.25rem;color:var(--text2)">${recs}</ul>
-        <div class="ai-timestamp">Generated: ${new Date().toLocaleString()} — Powered by Google Gemini (free)</div>
-      </div>`;
-
-    addLog('AI health summary generated (Gemini)','log-info');
-  } catch(err) {
-    body.innerHTML='<div style="color:#ff8888;font-size:13px;padding:1rem 0">AI summary failed: '+err.message+'<br><span style="color:var(--text3);font-size:11px">Get your free key at aistudio.google.com → paste into GEMINI_API_KEY</span></div>';
+  // Heart Rate
+  let hrStatus, hrMsg, hrColor;
+  if(hr < 40){
+    hrStatus='Critical'; hrColor='#ff8888';
+    hrMsg = hr+' BPM — Severe bradycardia. Dangerously low. Seek immediate medical attention.';
+  } else if(hr < 50){
+    hrStatus='Caution'; hrColor='#ffe090';
+    hrMsg = hr+' BPM — Mild bradycardia. Below normal resting range (60–100). Monitor closely.';
+  } else if(hr <= 100){
+    hrStatus='Normal'; hrColor='#80ffcc';
+    hrMsg = hr+' BPM — Within normal resting range (60–100 BPM).';
+  } else if(hr <= 120){
+    hrStatus='Caution'; hrColor='#ffe090';
+    hrMsg = hr+' BPM — Mild tachycardia. Elevated above normal. Could be due to activity, stress, or fever.';
+  } else if(hr <= 150){
+    hrStatus='Critical'; hrColor='#ff8888';
+    hrMsg = hr+' BPM — Significant tachycardia. Requires prompt medical evaluation.';
+  } else {
+    hrStatus='Critical'; hrColor='#ff8888';
+    hrMsg = hr+' BPM — Severe tachycardia. Seek immediate medical attention.';
   }
-  btn.disabled=false;
+
+  // SpO2
+  let spo2Status, spo2Msg, spo2Color;
+  if(spo2 >= 95){
+    spo2Status='Normal'; spo2Color='#80ffcc';
+    spo2Msg = spo2+'% — Normal oxygen saturation (95–100%).';
+  } else if(spo2 >= 90){
+    spo2Status='Caution'; spo2Color='#ffe090';
+    spo2Msg = spo2+'% — Mild hypoxemia. Below normal (95%). Patient may need supplemental oxygen.';
+  } else if(spo2 >= 85){
+    spo2Status='Critical'; spo2Color='#ff8888';
+    spo2Msg = spo2+'% — Moderate hypoxemia. Oxygen supply is inadequate. Immediate intervention needed.';
+  } else {
+    spo2Status='Critical'; spo2Color='#ff8888';
+    spo2Msg = spo2+'% — Severe hypoxemia. Life-threatening. Call emergency services immediately.';
+  }
+
+  // Temperature
+  let tempStatus, tempMsg, tempColor;
+  if(temp < 35){
+    tempStatus='Critical'; tempColor='#ff8888';
+    tempMsg = temp.toFixed(1)+'°C — Hypothermia. Dangerously low body temperature. Warm the patient and seek emergency care.';
+  } else if(temp < 36){
+    tempStatus='Caution'; tempColor='#ffe090';
+    tempMsg = temp.toFixed(1)+'°C — Slightly below normal (36–37.5°C). Monitor for signs of hypothermia.';
+  } else if(temp <= 37.5){
+    tempStatus='Normal'; tempColor='#80ffcc';
+    tempMsg = temp.toFixed(1)+'°C — Normal body temperature (36–37.5°C).';
+  } else if(temp <= 38){
+    tempStatus='Caution'; tempColor='#ffe090';
+    tempMsg = temp.toFixed(1)+'°C — Slightly elevated. Low-grade fever. Monitor and ensure hydration.';
+  } else if(temp <= 39){
+    tempStatus='Caution'; tempColor='#ffe090';
+    tempMsg = temp.toFixed(1)+'°C — Fever (38–39°C). Administer fever medication, ensure hydration, monitor.';
+  } else if(temp <= 40){
+    tempStatus='Critical'; tempColor='#ff8888';
+    tempMsg = temp.toFixed(1)+'°C — High fever (>39°C). Consult a doctor promptly.';
+  } else {
+    tempStatus='Critical'; tempColor='#ff8888';
+    tempMsg = temp.toFixed(1)+'°C — Hyperpyrexia (>40°C). Medical emergency — seek immediate care.';
+  }
+
+  // Fall risk
+  let fallRiskMsg, fallRiskColor;
+  if(fallCount === 0){
+    fallRiskMsg = 'No falls recorded. Fall risk appears low based on current data.';
+    fallRiskColor = '#80ffcc';
+  } else if(fallCount === 1){
+    fallRiskMsg = '1 fall recorded ('+( lastFallTime ? lastFallTime.toLocaleString() : 'unknown time' )+') — moderate fall risk. Ensure supervision and bed rails are raised.';
+    fallRiskColor = '#ffe090';
+  } else {
+    fallRiskMsg = fallCount+' falls recorded — elevated fall risk. Continuous supervision strongly recommended. Consider physiotherapy assessment.';
+    fallRiskColor = '#ff8888';
+  }
+
+  // Trend analysis (last 5 readings)
+  function trendDesc(arr, unit){
+    if(arr.length < 3) return 'Insufficient data for trend.';
+    const recent = arr.slice(-5);
+    const first  = recent[0], last = recent[recent.length-1];
+    const diff   = last - first;
+    if(Math.abs(diff) < 1) return 'Stable over last '+recent.length+' readings.';
+    return (diff > 0 ? 'Rising' : 'Falling')+' — changed by '+ Math.abs(diff).toFixed(1)+unit+' over last '+recent.length+' readings.';
+  }
+  const hrTrend   = trendDesc(state.hr,  ' BPM');
+  const spo2Trend = trendDesc(state.spo2,' %');
+  const tempTrend = trendDesc(state.temp,' °C');
+
+  // Overall status — worst of the three wins
+  const statuses = [hrStatus, spo2Status, tempStatus];
+  let overall, overallBadge, overallSummary;
+  if(statuses.includes('Critical')){
+    overall='Critical'; overallBadge='ai-badge-critical';
+    overallSummary='One or more vitals are in a critical range. Immediate medical attention may be required. Do not delay — contact a doctor or emergency services.';
+  } else if(statuses.includes('Caution')){
+    overall='Caution'; overallBadge='ai-badge-caution';
+    overallSummary='Some vitals are outside the normal range. The patient should be monitored closely and a doctor consulted if the condition does not improve.';
+  } else {
+    overall='Normal'; overallBadge='ai-badge-normal';
+    overallSummary='All vitals are within the normal clinical range. The patient appears stable. Continue routine monitoring.';
+  }
+
+  // Recommendations — built from conditions
+  const recs = [];
+  if(hrStatus==='Critical')    recs.push('Contact a doctor or emergency services immediately regarding heart rate of '+hr+' BPM.');
+  if(hrStatus==='Caution')     recs.push('Monitor heart rate closely. Ensure patient is resting and not in distress.');
+  if(spo2Status==='Critical')  recs.push('Check oxygen supply immediately. Reposition patient and administer supplemental O₂ if available.');
+  if(spo2Status==='Caution')   recs.push('Check that the SpO₂ sensor is properly fitted. If reading persists, consider supplemental oxygen.');
+  if(tempStatus==='Critical')  recs.push('High fever — administer prescribed fever medication, apply cool compress, and call a doctor.');
+  if(tempStatus==='Caution')   recs.push('Elevated temperature — ensure patient is hydrated and resting. Monitor every 30 minutes.');
+  if(fallCount > 0)            recs.push('Fall history detected — ensure bed rails are raised and patient is not left unattended.');
+  if(fallCount > 1)            recs.push('Multiple falls recorded — consider a physiotherapy or fall prevention assessment.');
+  if(recs.length === 0)        recs.push('Continue regular monitoring every 7 seconds via the ESP32 sensors.');
+  recs.push('This summary is rule-based — always consult a qualified doctor for clinical decisions.');
+
+  // Build the summary text to include in email reports
+  lastAISummary = `Overall: ${overall}\n${overallSummary}\nHR: ${hrMsg}\nSpO2: ${spo2Msg}\nTemp: ${tempMsg}\nFall risk: ${fallRiskMsg}\nRecommendations:\n`+recs.map(r=>'- '+r).join('\n');
+
+  // Render
+  body.innerHTML = `
+    <div class="ai-result">
+      <div class="ai-result-header">
+        <span class="ai-result-badge ${overallBadge}">${overall}</span>
+        <span style="font-size:12px;color:var(--text2)">Rule-based analysis — not a medical diagnosis</span>
+      </div>
+      <div style="margin-bottom:1rem;line-height:1.7">${overallSummary}</div>
+
+      <div class="ai-section-label">Vitals assessment</div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:1rem">
+        <div style="background:var(--bg3);border-radius:8px;padding:9px 12px;border-left:3px solid ${hrColor}">
+          <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:3px">HEART RATE &nbsp;<span style="color:${hrColor}">${hrStatus}</span></div>
+          <div style="font-size:12px;color:var(--text);line-height:1.5">${hrMsg}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">Trend: ${hrTrend}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:9px 12px;border-left:3px solid ${spo2Color}">
+          <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:3px">BLOOD OXYGEN SPO₂ &nbsp;<span style="color:${spo2Color}">${spo2Status}</span></div>
+          <div style="font-size:12px;color:var(--text);line-height:1.5">${spo2Msg}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">Trend: ${spo2Trend}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:9px 12px;border-left:3px solid ${tempColor}">
+          <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:3px">BODY TEMPERATURE &nbsp;<span style="color:${tempColor}">${tempStatus}</span></div>
+          <div style="font-size:12px;color:var(--text);line-height:1.5">${tempMsg}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">Trend: ${tempTrend}</div>
+        </div>
+      </div>
+
+      <div class="ai-section-label">Fall risk</div>
+      <div style="background:var(--bg3);border-radius:8px;padding:9px 12px;border-left:3px solid ${fallRiskColor};margin-bottom:1rem">
+        <div style="font-size:12px;color:var(--text);line-height:1.5">${fallRiskMsg}</div>
+      </div>
+
+      <div class="ai-section-label">Recommendations</div>
+      <ul style="font-size:12px;padding-left:1.25rem;color:var(--text2);line-height:1.8">
+        ${recs.map(r=>'<li>'+r+'</li>').join('')}
+      </ul>
+      <div class="ai-timestamp">Analysed: ${new Date().toLocaleString()} — No API used, 100% on-device logic</div>
+    </div>`;
+
+  addLog('Health summary generated (rule-based, no API)','log-info');
+  btn.disabled = false;
 }
 
 /* ================================================================
