@@ -1155,14 +1155,15 @@ function sendToDoctor(){
 
   const subject = 'Patient Health Report — Demo Patient [' + new Date().toLocaleTimeString() + ']';
 
-  // mailto: opens whatever email app is set as default on the device
-  // encodeURIComponent handles all special chars, newlines, etc.
-  const mailtoLink = 'mailto:' + encodeURIComponent(email)
-    + '?subject=' + encodeURIComponent(subject)
-    + '&body='    + encodeURIComponent(body);
-
-  // Open email app
-  window.location.href = mailtoLink;
+  // Use a hidden anchor click — avoids page navigation that kills the JS simulation
+  const a = document.createElement('a');
+  a.href = 'mailto:' + encodeURIComponent(email)
+         + '?subject=' + encodeURIComponent(subject)
+         + '&body='    + encodeURIComponent(body);
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
   status.textContent = 'Email app opened — review and click Send.';
   status.className   = 'send-status ok';
@@ -1498,29 +1499,31 @@ function downloadPDF(){
   const overlay = document.createElement('div');
   overlay.id = 'pdf-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#fff;overflow-y:auto;';
-  overlay.innerHTML = reportHTML;
+
+  // Close button + print button bar at the top of the overlay
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:sticky;top:0;background:#0a0f1e;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;z-index:1;';
+  bar.innerHTML = `
+    <span style="font-family:monospace;font-size:13px;color:#00d4ff;letter-spacing:1px">SIXTH SENSE — Patient Report</span>
+    <div style="display:flex;gap:10px">
+      <button onclick="window.print()" style="background:#00d4ff;color:#0a0f1e;border:none;border-radius:8px;padding:7px 18px;cursor:pointer;font-family:monospace;font-size:12px;font-weight:700">&#8659; Save as PDF</button>
+      <button onclick="(function(){var o=document.getElementById('pdf-overlay');var s=document.getElementById('pdf-print-style');if(o)o.remove();if(s)s.remove();})()" style="background:transparent;color:#8a9ab8;border:0.5px solid #8a9ab8;border-radius:8px;padding:7px 14px;cursor:pointer;font-family:monospace;font-size:12px">&#10005; Close</button>
+    </div>`;
+
+  overlay.appendChild(bar);
+
+  const content = document.createElement('div');
+  content.innerHTML = reportHTML;
+  overlay.appendChild(content);
   document.body.appendChild(overlay);
 
-  // Add a one-time print CSS rule that hides everything except the overlay
+  // Add print CSS — hides dashboard, shows only overlay
   const style = document.createElement('style');
   style.id = 'pdf-print-style';
   style.innerHTML = `@media print{body>*:not(#pdf-overlay){display:none!important}#pdf-overlay{position:static!important;overflow:visible!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}`;
   document.head.appendChild(style);
 
-  // Small delay so the overlay renders before print dialog opens
-  setTimeout(() => {
-    window.print();
-    // Remove overlay and style after print dialog closes
-    setTimeout(() => {
-      const el = document.getElementById('pdf-overlay');
-      const st = document.getElementById('pdf-print-style');
-      if(el) el.remove();
-      if(st) st.remove();
-    }, 1500);
-  }, 300);
-
-  addLog('PDF report generated — print dialog opened', 'log-info');
-}
+  addLog('PDF report ready — click Save as PDF or close', 'log-info');
 </script>
 
 <!-- Firebase SDK — only needed for doctor chat -->
