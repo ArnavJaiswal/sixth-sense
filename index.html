@@ -638,10 +638,6 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
     </div>
   </div>
 
-  <!-- HIDDEN PDF CONTENT (rendered off-screen, printed to PDF) -->
-  <div id="pdf-content" style="display:none;position:absolute;left:-9999px;top:0;width:800px;font-family:'DM Sans',sans-serif;background:#fff;color:#111;padding:40px">
-  </div>
-
   <div class="footer">SIXTH SENSE &nbsp;|&nbsp; ESP32 + MPU6050 IoT Health Monitor &nbsp;|&nbsp; &copy; 2026</div>
 </div>
 
@@ -1392,8 +1388,9 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closeVitalDia
 
 /* ================================================================
    PDF DOWNLOAD
-   Builds a clean printable HTML report and uses window.print()
-   No library needed — browser's built-in Save as PDF handles it
+   Opens a new browser window with the full report and triggers
+   print → Save as PDF. Much more reliable than printing the
+   current page because the content is fully isolated.
 ================================================================ */
 function downloadPDF(){
   const now      = new Date().toLocaleString();
@@ -1401,121 +1398,215 @@ function downloadPDF(){
   const s2Status = state.spo2Now >= 95 ? 'Normal' : state.spo2Now >= 90 ? 'Caution' : 'Critical';
   const tpStatus = state.tempNow >= 36 && state.tempNow <= 37.5 ? 'Normal' : state.tempNow >= 35 && state.tempNow <= 39 ? 'Caution' : 'Critical';
 
-  const statusColor = s => s==='Normal'?'#16a34a':s==='Caution'?'#ca8a04':'#dc2626';
-  const statusBg    = s => s==='Normal'?'#f0fdf4':s==='Caution'?'#fefce8':'#fef2f2';
+  const statusColor = s => s==='Normal'?'#16a34a':s==='Caution'?'#b45309':'#dc2626';
+  const statusBg    = s => s==='Normal'?'#f0fdf4':s==='Caution'?'#fffbeb':'#fef2f2';
+  const statusBorder= s => s==='Normal'?'#86efac':s==='Caution'?'#fcd34d':'#fca5a5';
 
-  const logRows = logEntries.slice(0,20).map(e =>
-    `<tr><td style="padding:5px 10px;font-family:monospace;font-size:11px;color:#666;border-bottom:1px solid #f0f0f0;white-space:nowrap">${e.t}</td><td style="padding:5px 10px;font-size:12px;color:#333;border-bottom:1px solid #f0f0f0">${e.msg}</td></tr>`
-  ).join('');
+  const recentHR  = state.hr.slice(-8).join(', ')  || String(state.hrNow);
+  const recentSpo = state.spo2.slice(-8).join(', ') || String(state.spo2Now);
+  const recentTmp = state.temp.slice(-8).map(v=>parseFloat(v).toFixed(1)).join(', ') || String(state.tempNow);
 
-  const recentHR  = state.hr.slice(-5).join(', ')  || '—';
-  const recentSpo = state.spo2.slice(-5).join(', ') || '—';
-  const recentTmp = state.temp.slice(-5).map(v=>parseFloat(v).toFixed(1)).join(', ') || '—';
+  const logRows = logEntries.length > 0
+    ? logEntries.slice(0,25).map((e,i) =>
+        `<tr style="background:${i%2===0?'#ffffff':'#f8fafc'}">
+          <td style="padding:6px 12px;font-family:monospace;font-size:11px;color:#64748b;white-space:nowrap;border-right:1px solid #e2e8f0">${e.t}</td>
+          <td style="padding:6px 12px;font-size:12px;color:#334155">${e.msg}</td>
+        </tr>`).join('')
+    : '<tr><td colspan="2" style="padding:12px;text-align:center;color:#94a3b8;font-size:12px">No events recorded</td></tr>';
 
-  const html = `
-    <div style="font-family:'Helvetica Neue',Arial,sans-serif;color:#111;max-width:740px;margin:0 auto">
+  // Build health analysis section
+  const analysisSection = lastAISummary
+    ? `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:18px 22px;margin-bottom:22px">
+        <div style="font-size:10px;color:#16a34a;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:10px">Health Analysis Summary</div>
+        <div style="font-size:12px;color:#1e293b;white-space:pre-line;line-height:1.8">${lastAISummary}</div>
+       </div>`
+    : '';
 
-      <!-- Header -->
-      <div style="background:#0a0f1e;color:#e8edf8;padding:24px 28px;border-radius:10px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div style="font-size:20px;font-weight:700;letter-spacing:2px;color:#00d4ff">SIXTH SENSE</div>
-          <div style="font-size:12px;color:#8a9ab8;margin-top:3px">Remote Health Monitoring System</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:11px;color:#8a9ab8">Report generated</div>
-          <div style="font-size:12px;font-family:monospace;color:#00d4ff">${now}</div>
-        </div>
+  // Complete self-contained HTML document for the new window
+  const fullHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Sixth Sense — Patient Report ${now}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1e293b;background:#fff;padding:0}
+  .page{max-width:760px;margin:0 auto;padding:32px 28px}
+
+  .report-header{background:#0a0f1e;color:#e8edf8;padding:22px 28px;border-radius:12px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center}
+  .report-title{font-size:22px;font-weight:700;letter-spacing:3px;color:#00d4ff}
+  .report-sub{font-size:11px;color:#8a9ab8;margin-top:4px}
+  .report-date-label{font-size:10px;color:#8a9ab8;margin-bottom:3px}
+  .report-date{font-size:12px;font-family:monospace;color:#00d4ff}
+
+  .section-title{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:10px}
+  .card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:20px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field-label{font-size:10px;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
+  .field-val{font-size:14px;font-weight:600;color:#1e293b}
+  .field-mono{font-family:monospace}
+
+  .vital-box{border-radius:10px;padding:18px 14px;text-align:center}
+  .vital-name{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:8px;font-weight:600}
+  .vital-num{font-size:34px;font-weight:700;font-family:monospace;line-height:1}
+  .vital-unit{font-size:11px;color:#64748b;margin:5px 0 10px}
+  .vital-badge{font-size:10px;font-weight:700;padding:3px 12px;border-radius:20px;display:inline-block;color:#fff}
+
+  .trend-label{font-size:10px;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
+  .trend-val{font-size:12px;font-family:monospace;color:#334155;word-break:break-all}
+
+  table{width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}
+  thead tr{background:#e2e8f0}
+  thead th{padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:600}
+
+  .report-footer{border-top:1px solid #e2e8f0;padding-top:14px;font-size:11px;color:#94a3b8;text-align:center;line-height:1.7;margin-top:8px}
+
+  @media print{
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .page{padding:20px}
+    .no-print{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="report-header">
+    <div>
+      <div class="report-title">SIXTH SENSE</div>
+      <div class="report-sub">Remote Health Monitoring System — Patient Report</div>
+    </div>
+    <div style="text-align:right">
+      <div class="report-date-label">Generated</div>
+      <div class="report-date">${now}</div>
+    </div>
+  </div>
+
+  <!-- PATIENT INFO -->
+  <div class="section-title">Patient Information</div>
+  <div class="card">
+    <div class="grid3">
+      <div><div class="field-label">Name</div><div class="field-val">Demo Patient</div></div>
+      <div><div class="field-label">Patient ID</div><div class="field-val field-mono">SS-20260317</div></div>
+      <div><div class="field-label">Ward / Location</div><div class="field-val">Ward B-2</div></div>
+      <div><div class="field-label">Device</div><div class="field-val">ESP32 + MPU6050</div></div>
+      <div><div class="field-label">Sensors</div><div class="field-val">MAX30102, LM35, GPS</div></div>
+      <div><div class="field-label">Report time</div><div class="field-val field-mono">${now}</div></div>
+    </div>
+  </div>
+
+  <!-- CURRENT VITALS -->
+  <div class="section-title">Current Vital Signs</div>
+  <div class="grid3" style="margin-bottom:22px">
+    <div class="vital-box" style="background:${statusBg(hrStatus)};border:1px solid ${statusBorder(hrStatus)}">
+      <div class="vital-name">Heart Rate</div>
+      <div class="vital-num" style="color:#e11d48">${state.hrNow}</div>
+      <div class="vital-unit">beats per minute</div>
+      <span class="vital-badge" style="background:${statusColor(hrStatus)}">${hrStatus}</span>
+      <div style="font-size:10px;color:#64748b;margin-top:8px">Normal: 60 – 100 BPM</div>
+    </div>
+    <div class="vital-box" style="background:${statusBg(s2Status)};border:1px solid ${statusBorder(s2Status)}">
+      <div class="vital-name">Blood Oxygen SpO₂</div>
+      <div class="vital-num" style="color:#0891b2">${state.spo2Now}</div>
+      <div class="vital-unit">percent saturation</div>
+      <span class="vital-badge" style="background:${statusColor(s2Status)}">${s2Status}</span>
+      <div style="font-size:10px;color:#64748b;margin-top:8px">Normal: 95 – 100%</div>
+    </div>
+    <div class="vital-box" style="background:${statusBg(tpStatus)};border:1px solid ${statusBorder(tpStatus)}">
+      <div class="vital-name">Body Temperature</div>
+      <div class="vital-num" style="color:#d97706">${parseFloat(state.tempNow).toFixed(1)}</div>
+      <div class="vital-unit">degrees Celsius</div>
+      <span class="vital-badge" style="background:${statusColor(tpStatus)}">${tpStatus}</span>
+      <div style="font-size:10px;color:#64748b;margin-top:8px">Normal: 36 – 37.5°C</div>
+    </div>
+  </div>
+
+  <!-- TRENDS -->
+  <div class="section-title">Recent Trends (Last 8 Readings)</div>
+  <div class="card">
+    <div class="grid3">
+      <div>
+        <div class="trend-label">Heart Rate (BPM)</div>
+        <div class="trend-val">${recentHR}</div>
       </div>
-
-      <!-- Patient -->
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:20px">
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Patient Information</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-          <div><div style="font-size:11px;color:#94a3b8">Name</div><div style="font-size:14px;font-weight:600">Demo Patient</div></div>
-          <div><div style="font-size:11px;color:#94a3b8">Patient ID</div><div style="font-size:14px;font-weight:600;font-family:monospace">SS-20260317</div></div>
-          <div><div style="font-size:11px;color:#94a3b8">Ward</div><div style="font-size:14px;font-weight:600">B-2</div></div>
-        </div>
+      <div>
+        <div class="trend-label">SpO₂ (%)</div>
+        <div class="trend-val">${recentSpo}</div>
       </div>
-
-      <!-- Vitals -->
-      <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Current Vital Signs</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
-        <div style="background:${statusBg(hrStatus)};border:1px solid ${statusColor(hrStatus)}44;border-radius:10px;padding:16px;text-align:center">
-          <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Heart Rate</div>
-          <div style="font-size:32px;font-weight:700;color:#e11d48;font-family:monospace">${state.hrNow}</div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:8px">BPM</div>
-          <div style="font-size:10px;font-weight:600;padding:2px 10px;border-radius:10px;background:${statusColor(hrStatus)};color:#fff;display:inline-block">${hrStatus}</div>
-        </div>
-        <div style="background:${statusBg(s2Status)};border:1px solid ${statusColor(s2Status)}44;border-radius:10px;padding:16px;text-align:center">
-          <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Blood Oxygen SpO₂</div>
-          <div style="font-size:32px;font-weight:700;color:#0891b2;font-family:monospace">${state.spo2Now}</div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:8px">%</div>
-          <div style="font-size:10px;font-weight:600;padding:2px 10px;border-radius:10px;background:${statusColor(s2Status)};color:#fff;display:inline-block">${s2Status}</div>
-        </div>
-        <div style="background:${statusBg(tpStatus)};border:1px solid ${statusColor(tpStatus)}44;border-radius:10px;padding:16px;text-align:center">
-          <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Body Temperature</div>
-          <div style="font-size:32px;font-weight:700;color:#d97706;font-family:monospace">${parseFloat(state.tempNow).toFixed(1)}</div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:8px">°C</div>
-          <div style="font-size:10px;font-weight:600;padding:2px 10px;border-radius:10px;background:${statusColor(tpStatus)};color:#fff;display:inline-block">${tpStatus}</div>
-        </div>
+      <div>
+        <div class="trend-label">Temperature (°C)</div>
+        <div class="trend-val">${recentTmp}</div>
       </div>
+    </div>
+  </div>
 
-      <!-- Trends -->
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:20px">
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Recent Trends (Last 5 Readings)</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">
-          <div><div style="color:#94a3b8;margin-bottom:3px">Heart Rate</div><div style="font-family:monospace">${recentHR} BPM</div></div>
-          <div><div style="color:#94a3b8;margin-bottom:3px">SpO₂</div><div style="font-family:monospace">${recentSpo} %</div></div>
-          <div><div style="color:#94a3b8;margin-bottom:3px">Temperature</div><div style="font-family:monospace">${recentTmp} °C</div></div>
-        </div>
+  <!-- FALL DETECTION -->
+  <div class="section-title">Fall Detection — MPU6050</div>
+  <div class="card">
+    <div class="grid3">
+      <div>
+        <div class="field-label">Total falls recorded</div>
+        <div class="field-val field-mono" style="color:${fallCount>0?'#dc2626':'#16a34a'};font-size:22px">${fallCount}</div>
       </div>
-
-      <!-- Fall Detection -->
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:20px">
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Fall Detection — MPU6050</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">
-          <div><div style="color:#94a3b8;margin-bottom:3px">Total Falls</div><div style="font-family:monospace;font-weight:600;color:${fallCount>0?'#dc2626':'#16a34a'}">${fallCount}</div></div>
-          <div><div style="color:#94a3b8;margin-bottom:3px">Last Fall</div><div style="font-size:11px;font-family:monospace">${lastFallTime?lastFallTime.toLocaleString():'None recorded'}</div></div>
-          <div><div style="color:#94a3b8;margin-bottom:3px">Emergency</div><div style="font-family:monospace;font-weight:600;color:${emergencyActive?'#dc2626':'#16a34a'}">${emergencyActive?'ACTIVE':'Inactive'}</div></div>
-        </div>
+      <div>
+        <div class="field-label">Last fall event</div>
+        <div class="field-val" style="font-size:12px">${lastFallTime ? lastFallTime.toLocaleString() : 'None recorded'}</div>
       </div>
-
-      <!-- Health Summary (if generated) -->
-      ${lastAISummary ? `
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px 20px;margin-bottom:20px">
-        <div style="font-size:11px;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Health Analysis Summary</div>
-        <div style="font-size:12px;color:#333;white-space:pre-line;line-height:1.7">${lastAISummary}</div>
-      </div>` : ''}
-
-      <!-- Event Log -->
-      ${logEntries.length > 0 ? `
-      <div style="margin-bottom:20px">
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Recent Event Log</div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;background:#f8fafc;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0">
-          <thead><tr style="background:#e2e8f0"><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b">Time</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b">Event</th></tr></thead>
-          <tbody>${logRows}</tbody>
-        </table>
-      </div>` : ''}
-
-      <!-- Footer -->
-      <div style="border-top:1px solid #e2e8f0;padding-top:14px;font-size:11px;color:#94a3b8;text-align:center;line-height:1.6">
-        Generated by Sixth Sense IoT Health Monitor &nbsp;|&nbsp; ${now}<br/>
-        This report is for monitoring purposes only and is not a substitute for professional medical advice.
+      <div>
+        <div class="field-label">Emergency status</div>
+        <div class="field-val" style="color:${emergencyActive?'#dc2626':'#16a34a'}">${emergencyActive ? '⚠ ACTIVE' : 'Inactive'}</div>
       </div>
-    </div>`;
+    </div>
+  </div>
 
-  // Inject into hidden container and trigger print
-  const container = document.getElementById('pdf-content');
-  container.innerHTML = html;
-  container.style.display = 'block';
+  <!-- HEALTH ANALYSIS -->
+  ${analysisSection}
 
-  setTimeout(() => {
-    window.print();
-    // Hide after printing
-    setTimeout(() => { container.style.display = 'none'; }, 1000);
-  }, 200);
+  <!-- EVENT LOG -->
+  <div class="section-title">Event Log (Last 25 Events)</div>
+  <div style="margin-bottom:22px">
+    <table>
+      <thead><tr><th style="width:90px">Time</th><th>Event</th></tr></thead>
+      <tbody>${logRows}</tbody>
+    </table>
+  </div>
 
-  addLog('PDF report generated and sent to print dialog','log-info');
+  <!-- PRINT BUTTON (hidden in PDF) -->
+  <div class="no-print" style="text-align:center;margin-bottom:20px">
+    <button onclick="window.print()" style="background:#0a0f1e;color:#00d4ff;border:1px solid #00d4ff;padding:10px 28px;border-radius:8px;cursor:pointer;font-size:14px;font-family:monospace;letter-spacing:1px">
+      &#8659; Save as PDF
+    </button>
+    <p style="font-size:11px;color:#94a3b8;margin-top:8px">In the print dialog, set Destination to "Save as PDF"</p>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="report-footer">
+    Generated by Sixth Sense IoT Health Monitor &nbsp;|&nbsp; ${now}<br/>
+    This report is for monitoring and informational purposes only.<br/>
+    It is not a substitute for professional clinical assessment or medical advice.
+  </div>
+
+</div>
+<script>
+  // Auto-trigger print after a short delay so content renders fully
+  window.onload = function(){ setTimeout(function(){ window.print(); }, 600); };
+</script>
+</body>
+</html>`;
+
+  // Open a brand new window with the complete report
+  const win = window.open('', '_blank', 'width=900,height=700');
+  if(!win){
+    alert('Please allow pop-ups for this page, then click Download PDF again.');
+    return;
+  }
+  win.document.open();
+  win.document.write(fullHTML);
+  win.document.close();
+
+  addLog('PDF report opened in new window — ready to save', 'log-info');
 }
 </script>
 
